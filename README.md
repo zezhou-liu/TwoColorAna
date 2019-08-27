@@ -19,13 +19,10 @@ Load ALL the data inside the "main_path". This function returns a dictionary con
 
 
 Example of use:
-
-  import module
-  
+```python
+  import module 
   main_path = 'C:/Users/admin'
-  
   tot_file = module.bashload(main_path)
-  
   print(tot_file['ecc03_2_y1x'])
- 
+```
 ### 
