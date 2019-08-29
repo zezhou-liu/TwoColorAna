@@ -15,8 +15,11 @@
   
 ## Module
 ### bashload(main_path)
-Load ALL the data inside the "main_path". This function returns a dictionary containing all the relavent data. The name format is: 'eccentricity_videoclip_y1x'. For example, 'ecc03_2_y1x' means the data corresponding to /2019mmdd_ecc03/2/y1x.txt.
+**Input**: Root path. For example, if you save your data in '../main/20180801_ecc0/1/y1x.txt', the main_path is '../main'. No '/' in the end.
 
+**Output**: Data handle, A dictionary containing all the data.
+
+Load ALL the data inside the "main_path". This function returns a dictionary containing all the relavent data. The name format is: 'eccentricity_videoclip_y1x'. For example, 'ecc03_2_y1x' means the data corresponding to /2019mmdd_ecc03/2/y1x.txt.
 
 Example of use:
 ```python
@@ -25,4 +28,5 @@ Example of use:
   tot_file = module.bashload(main_path)
   print(tot_file['ecc03_2_y1x'])
 ```
-### 
+### bashvector(handle)
+**Input**: tot_file dictionary.
