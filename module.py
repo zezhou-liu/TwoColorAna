@@ -153,27 +153,6 @@ def bashfree(tot_vector, type):
             tot_free[temp+'_Fs'] = free_short
             tot_free[temp + '_bins'] = xbin[0:-1]
             tot_free[temp + '_binss'] = xbin_short[0:-1]
-            ###################### Maintaining code ###############
-            # cov = np.cov(xtemp, ytemp)
-            # eig, vec = np.linalg.eigh(cov)
-            # tot_ortaxis[temp] = vec
-            # # Axis rotation
-            # if np.abs(eig[0]) > np.abs(eig[1]):
-            #     xrot = vec[:,0]
-            # else:
-            #     xrot = vec[:,1]
-            # theta = np.arctan2(xrot[0], xrot[1])
-            # transmatrix[0, 0] = np.cos(theta)
-            # transmatrix[0, 1] = -np.sin(theta)
-            # transmatrix[1, 0] = np.sin(theta)
-            # transmatrix[1, 1] = np.cos(theta)
-            # xtrain = np.array([xtemp,ytemp])
-            # plt.plot(xtrain[0, :], xtrain[1, :])
-            # xtrain_rotated = np.dot(transmatrix, xtrain)
-            # xdensity = xtrain_rotated[0,:]
-            # # plt.plot(xtrain_rotated[0,:], xtrain_rotated[1,:])
-            #plt.show()
-            #########################################################
     return tot_free, sep_projection
 def bashfreeplt(tot_free):
     # tot_free--
