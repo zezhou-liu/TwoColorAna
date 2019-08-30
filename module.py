@@ -28,10 +28,6 @@ def testplot(x,y):
         y = Datahandle(y)
     ax.plot(x.read(), y.read(), '+')
 
-
-
-    # testplot(x,y)
-
 ####################### Main process block ####################################
 # Bash handle.
 class handle:
