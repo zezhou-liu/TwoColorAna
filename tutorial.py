@@ -14,5 +14,5 @@ h, tot_vec_overlay = module.bashoverlay(h)
 # Plot
 fig = plt.figure()
 ax = fig.add_subplot(1, 1, 1)
-ax.plot(h.tot_vec_overlay['ecc03_y1x'], h.tot_vec_overlay['ecc03_y1y'])
+ax.plot(h.tot_vec_overlay['ecc03_delx'], h.tot_vec_overlay['ecc03_dely'], '+')
 plt.show()

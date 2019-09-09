@@ -50,10 +50,18 @@ def bashload(main_path):
         print("No such directory, please check.")
         return ""
     subfolder = os.listdir(main_path)
+
+    for i in subfolder:
+        if i[-3:] == 'txt':
+            subfolder.remove(i)
+
     for i in subfolder:
         subpath = main_path+'/'+i
         os.chdir(subpath)
         subsubfolder = os.listdir()
+        for j in subsubfolder:
+            if i[-3:] == 'txt':
+                subsubfolder.remove(i)
         for j in subsubfolder:
             if j[-3:]=="txt":
                 continue
@@ -201,6 +209,7 @@ def bashpos(handle):
         return tot_vector
     except:
         print('No tot_vector attribute is defined for current input. Please refer to bashvector function.')
+
 ###############################################
 if __name__=="__main__":
     bashload()
