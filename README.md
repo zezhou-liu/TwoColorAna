@@ -44,4 +44,19 @@ Example of use:
   handle, tot_vector = module.bashvector(handle)
   print(handle.tot_vector['ecc03_1_delx'])
 ```
-###
+### bashoverlay(handle)
+**Input**: Data handle.
+
+**Output**: Data handle, a dictionary containing all the vectors after merging. Item naming format: **'ecc03_delx'**.
+
+This function merges all the videos with the same eccentricity into one dictionary item. The data handle must contain *tot_vector* before processing.
+
+Example of use:
+```python
+  import module 
+  main_path = 'C:/Users/admin'
+  handle, tot_file = module.bashload(main_path)
+  handle, tot_vector = module.bashvector(handle)
+  handle, tot_vec_overlay = module.bashvector(handle)
+  print(handle.tot_vec_overlay['ecc03_delx'])
+```
