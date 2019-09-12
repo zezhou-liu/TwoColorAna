@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.decomposition import PCA
 from matplotlib.lines import Line2D
+from sklearn.cluster import KMeans
 
 # import the essential packages: numpy as np, matplotlib.pyplot as plt, sklearn.decomposition.PCA as pca
 # File container overall is dictionary. The naming format is eccentricity_videoclip_channel. For example: ecc03_2_y1x.
@@ -209,8 +210,39 @@ def bashpos(handle):
         return tot_vector
     except:
         print('No tot_vector attribute is defined for current input. Please refer to bashvector function.')
-
+def bashshift(handle, n_clusters = 1, n_init = 5, max_iter = 100, tol=0.001):
+    ### Using k-means to shift all the data to 0 ###
+    ## TODO: Implement the adaptive n_clusters.
+    tot_file = handle.tot_file
+    temp = ''
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    km = KMeans(n_clusters=n_clusters, n_init=n_init, max_iter=max_iter, tol=tol, precompute_distances='auto',
+                verbose=0, random_state=None, algorithm='full')
+    for i in tot_file:
+        if i.split('_')[0] != 'ecc09':
+            continue
+        if temp != (i.split('_')[0] + '_' + i.split('_')[1]):
+            temp = i.split('_')[0] + '_' + i.split('_')[1]
+            y1x = tot_file[temp + '_y1x']
+            y1y = tot_file[temp + '_y1y']
+            y3x = tot_file[temp + '_y3x']
+            y3y = tot_file[temp + '_y3y']
+            yoyo1 = np.transpose(np.array([y1x, y1y]))
+            yoyo3 = np.transpose(np.array([y3x, y3y]))
+            km.fit(yoyo3)
+            y1center = km.cluster_centers_
+            ax.plot(y1center[:, 0], y1center[:, 1], '+')
+    plt.show()
+def clean(handle):
+## Manual clean all the data outside the ROI. This will pop up a window and let usr select the ROI.
+## Data outside ROI will be deleted.
+## Require bashvector.
+## TODO:Implement here
+    return
 ###############################################
 if __name__=="__main__":
-    bashload()
+    main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid"
+    handle, tot_file = bashload(main_path)
+    bashshift(handle)
 # plt.show()
