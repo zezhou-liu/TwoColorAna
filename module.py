@@ -4,6 +4,7 @@ import os
 from sklearn.decomposition import PCA
 from matplotlib.lines import Line2D
 from sklearn.cluster import KMeans
+import json
 import tkinter as tk
 
 # import the essential packages: numpy as np, matplotlib.pyplot as plt, sklearn.decomposition.PCA as pca
@@ -54,7 +55,7 @@ def bashload(main_path):
     subfolder = os.listdir(main_path)
 
     for i in subfolder:
-        if i[-3:] == 'txt':
+        if i[-3:] == 'txt' or i == 'roi':
             subfolder.remove(i)
 
     for i in subfolder:
@@ -62,8 +63,8 @@ def bashload(main_path):
         os.chdir(subpath)
         subsubfolder = os.listdir()
         for j in subsubfolder:
-            if i[-3:] == 'txt':
-                subsubfolder.remove(i)
+            if j[-3:] == 'txt' or j[-4:] == 'json':
+                subsubfolder.remove(j)
         for j in subsubfolder:
             if j[-3:]=="txt":
                 continue
@@ -76,9 +77,11 @@ def bashload(main_path):
                 fname_temp = prefix + '_' + k[:3]
                 fname_temp = fname_temp.split('_')[1] + '_' + fname_temp.split('_')[2]+'_' + fname_temp.split('_')[3]
                 fpath_temp = temp + '/' + k
+                print('Reading files from:', fpath_temp)
                 tot_file[fname_temp] = np.loadtxt(fpath_temp)
     a = handle
     a.tot_file = tot_file
+    a.main_path = main_path
     return a, tot_file
 def bashvector(handle):
     # Calculate the vector separation for each video
@@ -235,12 +238,12 @@ def bashshift(handle, n_clusters = 1, n_init = 5, max_iter = 100, tol=0.001):
             y1center = km.cluster_centers_
             ax.plot(y1center[:, 0], y1center[:, 1], '+')
     plt.show()
-def clean(handle):
+def bashroi(handle):
     ## Manual clean all the data outside the ROI. This will pop up a window and let usr select the ROI.
     ## Data outside ROI will be deleted.
     ## Require bashvector.
     ## TODO:Implement here
-
+    main_path = handle.main_path
     class ClickCap:
         def __init__(self, fig):
             self.xs = []
@@ -248,18 +251,25 @@ def clean(handle):
             self.times = 0
             self.cid = fig.canvas.mpl_connect('button_press_event', self)
         def __call__(self, event):
-            if self.times < 2:
+            if self.times != 1:
                 self.xs.append(event.xdata)
                 self.ys.append(event.ydata)
-                print(self.times)
+                print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+                      ('double' if event.dblclick else 'single', event.button,
+                       event.x, event.y, event.xdata, event.ydata))
                 self.times = self.times + 1
             else:
+                self.xs.append(event.xdata)
+                self.ys.append(event.ydata)
+                print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+                      ('double' if event.dblclick else 'single', event.button,
+                       event.x, event.y, event.xdata, event.ydata))
                 self.times = 0
                 plt.close('all')
 
     tot_vector = handle.tot_vector
     temp = ''
-    crop = {}
+    roi = {}
     for i in tot_vector:
         if temp != i.split('_')[0] + '_' + i.split('_')[1]:
             fig = plt.figure()
@@ -267,19 +277,53 @@ def clean(handle):
             cp = ClickCap(fig)
             temp = i.split('_')[0] + '_' + i.split('_')[1]
             ax.plot(tot_vector[temp + '_delx'], tot_vector[temp + '_dely'], '+')
-            ax.set_xlim([-10, 10])
-            ax.set_ylim([-10, 10])
+            ax.set_xlim([-20, 20])
+            ax.set_ylim([-20, 20])
+            ax.grid(b=True, which='both', axis='both')
             plt.show()
-            crop[temp + 'x'] = cp.xs
-            crop[temp + 'y'] = cp.ys
-            print(crop)
-    handle.crop = crop
-    return handle, crop
-
+            roi[temp + '_x'] = cp.xs
+            roi[temp + '_y'] = cp.ys
+            # print(crop)
+    import json
+    os.chdir(main_path)
+    json = json.dumps(roi)
+    f = open('roi.json', 'w')
+    f.write(json)
+    f.close()
+    handle.roi = roi
+    print(roi)
+    return handle, roi
+def bashclean(handle, roi=True):
+    tot_vector = handle.tot_vector
+    if roi ==True:
+        ## load roi file saved in ./roi/roi.json
+        main_path = handle.main_path
+        os.chdir(main_path + '/roi')
+        file = os.listdir()
+        for i in file:
+            if i[-4:] != 'json':
+                continue
+            else:
+                roi = json.load(open(i))
+                print(roi)
+                temp = ''
+                for j in roi:
+                    if temp != j.split('_')[0] + '_' + j.split('_')[1]:
+                        temp = j.split('_')[0] + '_' + j.split('_')[1]
+                        xmin = roi[temp + '_x'][0]
+                        xmax = roi[temp + '_x'][1]
+                        ymin = roi[temp + '_y'][0]
+                        ymax = roi[temp + '_y'][0]
+                        delx = tot_vector[temp + '_delx']
+                        dely = tot_vector[temp + '_dely']
+                        argx = (delx>xmin) * (delx<xmax)
+                        print(argx)
+    else:
+        return
 ###############################################
 if __name__=="__main__":
+
     main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid"
     handle, tot_file = bashload(main_path)
     handle, tot_vector = bashvector(handle)
-    handle, crop = clean(handle)
-# plt.show()
+    bashclean(handle, roi=True)
