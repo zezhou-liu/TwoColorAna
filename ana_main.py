@@ -3,15 +3,43 @@ import matplotlib.pyplot as plt
 import module
 import matplotlib.cm as cm
 import matplotlib.colors as colors
-main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid"
+import json
+import os
 
+main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid"
+cleanmode = 1
 # Read files
 handle, tot_file = module.bashload(main_path)
 handle, tot_vector = module.bashvector(handle)
 handle, tot_vec_overlay = module.bashoverlay(handle)
 
-#
+# Data clean
+if cleanmode == 0:
+    # handle, roi = module.bashroi(handle)
+    handle, tot_file_clean = module.bashclean(handle)
+    handle, tot_file_shift = module.bashshift(handle)
+elif cleanmode == 1:
+    os.chdir(main_path+'/data')
+    tot_file_clean = json.load(open('tot_file_clean.json'))
+    for filename in tot_file_clean:
+        tot_file_clean[filename] = np.array(tot_file_clean[filename])
+    handle.tot_file_clean = tot_file_clean
 
+# Cleaned data re-calculate
+handle, tot_vector_clean = module.bashvector(handle, mode='clean')
+# handle.tot_vector_clean['ecc03_1_delx'] = handle.tot_vector_clean['ecc03_1_delx']-np.mean(handle.tot_vector_clean['ecc03_1_delx'])
+# handle.tot_vector_clean['ecc03_1_dely'] = handle.tot_vector_clean['ecc03_1_dely']-np.mean(handle.tot_vector_clean['ecc03_1_dely'])
+handle, tot_vec_overlay_clean = module.bashoverlay(handle, mode='clean')
+
+# Visualization
+fig = plt.figure()
+ax = fig.add_axes([0.1,0.1,0.8,0.8])
+ax.plot(handle.tot_file_clean['ecc03_1_y1x'], handle.tot_file_clean['ecc03_1_y1y'], '+')
+ax.plot(handle.tot_file_clean['ecc03_1_y3x'], handle.tot_file_clean['ecc03_1_y3y'], '+')
+ax.legend(['y1', 'y3'])
+ax.set_xlim([-12,12])
+ax.set_ylim([-12,12])
+plt.show()
 def temperr():
     ecc09_delx = np.concatenate([handle.tot_vector['ecc09_1_delx'], handle.tot_vector['ecc09_2_delx'],
                                  handle.tot_vector['ecc09_3_delx'], handle.tot_vector['ecc09_4_delx'],
