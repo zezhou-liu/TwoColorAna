@@ -228,7 +228,6 @@ def bashfree(handle, type='o'):
     except:
         print('No tot_vector or tot_vec_overlay attribute is defined for current input. Please refer to bashvector function.')
         return
-
 # def bashfreeplt(handle):
 #     # tot_free--
 #     # Here the input has to come from bashfree with type'o'. Otherwise there will be too many lines in the graph. Too disturbing.
@@ -334,7 +333,6 @@ def bashshift(handle, n_init = 5, max_iter = 100, tol=0.001):
         tot_file_shift[filename] = np.array(tot_file_shift[filename])
     handle.tot_file_shift = tot_file_shift
     return handle, tot_file_shift
-
 def bashroi(handle):
     ## Manual clean all the data outside the ROI. This will pop up a window and let usr select the ROI.
     ## Data outside ROI will be deleted.
@@ -434,28 +432,90 @@ def bashclean(handle):
         print('Please run bashroi first.')
         return
 
+def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[], debug='False'):
+    # Calculate the density distribution in function of both radius and angle. Data clean and shift is required.
+    # dataset = 'vec': vector representation, 'pos': position representation. bins: bin number.
+    # debug: Testing mode. When turn to 'True', the function will accept x(np array) and y(np array) as the calculation data.
+    # area: ellipse area(um^2). It shows the generic size of ellipse
+    if debug == 'False':
+        if dataset == 'position':
+            data = handle.tot_pos_overlay_shift
+        elif dataset =='vector':
+            data = handle.tot_vec_overlay_clean
+
+        fils = 28 # Filter intensity
+        area = area*fils # convert unit to pixel^2. Roughly. The size of the filter ellipse is also changed here.
+
+        temp = ''
+        if 'del' in list(data.keys())[0]:
+            for filename in data:
+                if temp != filename.split('_')[0]:
+                    temp = filename.split('_')[0]
+                    ecc = temp.replace('ecc', '')
+                    if ecc == '0':
+                        ecc = 0
+                    else:
+                        ecc = float('0.'+ecc.replace('0', ''))
+                    delx = data[temp+'_delx']
+                    # delx = delx - np.mean(delx)
+                    dely = data[temp + '_dely']
+                    # dely = dely - np.mean(dely)
+                    x = np.power(delx, 2)
+                    y = np.power(dely, 2)
+                    a = (area**2/(4*(1-ecc**2)))**(0.25) # rough half-long axis
+                    b = area/2/a # rough half-short axis
+                    mask = (x/(a**2)+y/(b**2)) < 1
+                    # TODO: Vector cut. Strength of the filter is set by the variable "fils" above. Theoretically it should be 6.25**2.
+
+                    plt.plot(delx, dely, '+')
+                    plt.plot(delx[mask], dely[mask], '+')
+                    plt.show()
+                    print('ecc:'+str(ecc)+' done!')
+        else:
+            for filename in data:
+                if temp != filename.split('_')[0]:
+                    temp = filename.split('_')[0]
+                    y1x = data[temp+'_y1x']
+                    y1y = data[temp + '_y1x']
+                    y3x = data[temp + '_y1x']
+                    y3y = data[temp + '_y1x']
+                    # TODO:
+    elif debug=='True':
+        x = np.array(x)
+        y = np.array(y)
+        # TODO:
+    plt.show()
+    print(2)
+
+
+
+
+
 ###############################################
 if __name__=="__main__":
 
     main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid"
-    os.chdir(main_path+'/data')
-
+    cleanmode = 1  # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
+    # 0-raw data. Experimental data before shift to zero.
+    # Read files
     handle, tot_file = bashload(main_path)
-    handle, tot_vector = bashvector(handle, mode='raw')
-    handle, tot_vec_overlay = bashoverlay(handle, mode='raw')
-    handle, maskfile = bashclean(handle)
+    handle, tot_vector = bashvector(handle)
+    handle, tot_vec_overlay = bashoverlay(handle)
 
+    # Data clean
+    if cleanmode == 0:
+        handle, roi = bashroi(handle)  # ROI selection
+        handle, tot_file_clean = bashclean(handle)  # Delete points ouside ROI and attach mask to handle.
+        handle, tot_file_shift = bashshift(handle)  # Shift data to zero according to YOYO-3 channel
+    elif cleanmode == 1:
+        os.chdir(main_path + '/data')
+        tot_file_clean = json.load(open('tot_file_clean.json'))
+        for filename in tot_file_clean:
+            tot_file_clean[filename] = np.array(tot_file_clean[filename])
+        handle.tot_file_shift = tot_file_clean
 
-    tot_file_clean = json.load(open('tot_file_clean.json'))
-    for filename in tot_file_clean:
-        tot_file_clean[filename] = np.array(tot_file_clean[filename])
-    handle.tot_file_clean = tot_file_clean
-
+    # Cleaned data re-calculate
     handle, tot_vector_clean = bashvector(handle, mode='clean')
-    handle, tot_vec_overlay_clean = bashoverlay(handle, mode='clean')
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    ax.plot(tot_vec_overlay_clean['ecc09_delx'], tot_vec_overlay_clean['ecc09_dely'], '+')
-    ax.set_xlim([-20, 20])
-    ax.set_ylim([-20, 20])
-    plt.show()
+    handle, tot_vec_overlay_clean = bashoverlay(handle, mode='clean', set='vector')
+    handle, tot_pos_overlay_shift = bashoverlay(handle, mode='clean', set='position')
+    densitycal(handle, dataset = 'vector')
