@@ -6,8 +6,8 @@ import matplotlib.colors as colors
 import json
 import os
 
-main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid"
-cleanmode = 1 # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
+main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/lplasmid"
+cleanmode = 0 # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
               # 0-raw data. Experimental data before shift to zero.
 # Read files
 handle, tot_file = module.bashload(main_path)
@@ -74,7 +74,7 @@ handle, tot_pos_overlay_shift = module.bashoverlay(handle, mode='clean', set='po
 # x = np.append(x, handle.tot_file_shift['ecc09_3_y1x'])
 # y = np.append(y, handle.tot_file_shift['ecc09_3_y1y'])
 # x = np.append(x, -handle.tot_file_shift['ecc09_4_y1x'])
-# y = np.append(y, handle.tot_file_shift['ecc09_4_y1y'])
+# y = np.append(y, handle.tot_file_shift['ecc09_4_y1y'])                             # Plot detail. DO NOT delete.!!!!
 # x = np.append(x, -handle.tot_file_shift['ecc09_5_y1x'])
 # y = np.append(y, handle.tot_file_shift['ecc09_5_y1y'])
 # x = np.append(x, handle.tot_file_shift['ecc09_6_y1x'])
@@ -92,7 +92,7 @@ handle, tot_pos_overlay_shift = module.bashoverlay(handle, mode='clean', set='po
 x = np.array([])
 y = np.array([])
 # x = np.append(x, handle.tot_file_shift['ecc03_1_y1x'])
-# y = np.append(y, handle.tot_file_shift['ecc03_1_y1y'])
+# y = np.append(y, handle.tot_file_shift['ecc03_1_y1y'])                                # Plot detail. DO NOT delete.!!!!
 # x = np.append(x, handle.tot_file_shift['ecc03_2_y1x'])
 # y = np.append(y, handle.tot_file_shift['ecc03_2_y1y'])
 x = np.append(x, handle.tot_file_shift['ecc03_3_y1x'])
