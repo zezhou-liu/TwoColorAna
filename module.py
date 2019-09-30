@@ -2,10 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from sklearn.decomposition import PCA
-from matplotlib.lines import Line2D
 from sklearn.cluster import KMeans
 import json
-import tkinter as tk
 
 # import the essential packages: numpy as np, matplotlib.pyplot as plt, sklearn.decomposition.PCA as pca
 # File container overall is dictionary. The naming format is eccentricity_videoclip_channel. For example: ecc03_2_y1x.
@@ -437,6 +435,9 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
     # dataset = 'vec': vector representation, 'pos': position representation. bins: bin number.
     # debug: Testing mode. When turn to 'True', the function will accept x(np array) and y(np array) as the calculation data.
     # area: ellipse area(um^2). It shows the generic size of ellipse
+    # No ellipse fitting in the end. Hard to justify if there is any mismatch.
+
+    x0 = [15, 15]
     if debug == 'False':
         if dataset == 'position':
             data = handle.tot_pos_overlay_shift
@@ -448,6 +449,7 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
 
         temp = ''
         if 'del' in list(data.keys())[0]:
+            density_hist = {}
             for filename in data:
                 if temp != filename.split('_')[0]:
                     temp = filename.split('_')[0]
@@ -457,20 +459,36 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
                     else:
                         ecc = float('0.'+ecc.replace('0', ''))
                     delx = data[temp+'_delx']
-                    # delx = delx - np.mean(delx)
                     dely = data[temp + '_dely']
-                    # dely = dely - np.mean(dely)
                     x = np.power(delx, 2)
                     y = np.power(dely, 2)
                     a = (area**2/(4*(1-ecc**2)))**(0.25) # rough half-long axis
                     b = area/2/a # rough half-short axis
-                    mask = (x/(a**2)+y/(b**2)) < 1
+                    r = x/(a**2)+y/(b**2)
+                    mask = r < 1
                     # TODO: Vector cut. Strength of the filter is set by the variable "fils" above. Theoretically it should be 6.25**2.
-
-                    plt.plot(delx, dely, '+')
-                    plt.plot(delx[mask], dely[mask], '+')
-                    plt.show()
-                    print('ecc:'+str(ecc)+' done!')
+                    # Microscope pixel size calibration is needed.
+                    r_edge = np.linspace(0, 1, bins)
+                    x = delx[mask]
+                    y = dely[mask]
+                    r = x**2/(a**2)+y**2/(b**2)
+                    area_e = np.zeros(len(r_edge))
+                    for i in range(len(r_edge)):
+                        if i == 0:
+                            area_e[i] = 2*a*b*r_edge[0]
+                        else:
+                            area_e[i] = 2 * a * b * (r_edge[i]-r_edge[i-1])
+                    density = np.zeros(len(area_e))
+                    for i in range(len(r_edge)):
+                        if i == 0:
+                            r0 = 0
+                        else:
+                            r0 = r_edge[i-1]
+                        r1 = r_edge[i]
+                        density[i] = (np.sum((r<r1)*(r>r0)))/area_e[i]
+                    density_hist[temp+'_density'] = density
+                    density_hist[temp+'_edge'] = r_edge
+            handle.tot_density_hist = density_hist
         else:
             for filename in data:
                 if temp != filename.split('_')[0]:
@@ -487,14 +505,11 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
     plt.show()
     print(2)
 
-
-
-
-
 ###############################################
 if __name__=="__main__":
 
-    main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid"
+    main_path = '/media/zezhou/Seagate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid'
+    os.chdir(main_path)
     cleanmode = 1  # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
     # 0-raw data. Experimental data before shift to zero.
     # Read files
@@ -518,4 +533,12 @@ if __name__=="__main__":
     handle, tot_vector_clean = bashvector(handle, mode='clean')
     handle, tot_vec_overlay_clean = bashoverlay(handle, mode='clean', set='vector')
     handle, tot_pos_overlay_shift = bashoverlay(handle, mode='clean', set='position')
-    densitycal(handle, dataset = 'vector')
+    densitycal(handle, dataset = 'vector',bins=20)
+
+# Plot
+    plt.plot(handle.tot_density_hist['ecc0_edge'], handle.tot_density_hist['ecc0_density'])
+    plt.plot(handle.tot_density_hist['ecc06_edge'], handle.tot_density_hist['ecc06_density'])
+    plt.plot(handle.tot_density_hist['ecc08_edge'], handle.tot_density_hist['ecc08_density'])
+    plt.plot(handle.tot_density_hist['ecc09_edge'], handle.tot_density_hist['ecc09_density'])
+    plt.legend(['ecc0', 'ecc06', 'ecc08', 'ecc09'])
+    plt.show()
