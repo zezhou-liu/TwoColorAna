@@ -6,8 +6,8 @@ import matplotlib.colors as colors
 import json
 import os
 
-main_path = "D:/McGillResearch/2019Manuscript_Analysis/Analysis/lplasmid"
-cleanmode = 0 # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
+main_path = "/media/zezhou/Seagate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid"
+cleanmode = 1 # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
               # 0-raw data. Experimental data before shift to zero.
 # Read files
 handle, tot_file = module.bashload(main_path)
@@ -33,8 +33,12 @@ handle, tot_pos_overlay_shift = module.bashoverlay(handle, mode='clean', set='po
 
 
 
+
 # Visualization
-# Position plot
+
+#################
+# Position plot #
+#################
 # xlim = 12
 # fig = plt.figure() # figsize=[6.4, 4.8]
 # scale = 6.4/4.8
@@ -65,7 +69,9 @@ handle, tot_pos_overlay_shift = module.bashoverlay(handle, mode='clean', set='po
 # ax.set_xlabel(r"X-position($\mu$m)", fontsize = 15)
 # ax.set_ylabel(r"Y-position($\mu$m)", fontsize = 15)
 
-# histogram
+###############
+# histogram2d #
+###############
 # ecc09
 # x = handle.tot_file_shift['ecc09_1_y1x']
 # y = handle.tot_file_shift['ecc09_1_y1y']
@@ -87,49 +93,64 @@ handle, tot_pos_overlay_shift = module.bashoverlay(handle, mode='clean', set='po
 # y = np.append(y, handle.tot_file_shift['ecc09_8_y1y'][-2000:])
 # x = np.append(x, handle.tot_file_shift['ecc09_9_y1x'])
 # y = np.append(y, handle.tot_file_shift['ecc09_9_y1y'])
-
+# handle = module.densitycal(handle, dataset='position',x=x, y=y, ecc=0.9, bins=50, debug="True")
 # ecc03
-x = np.array([])
-y = np.array([])
-# x = np.append(x, handle.tot_file_shift['ecc03_1_y1x'])
-# y = np.append(y, handle.tot_file_shift['ecc03_1_y1y'])                                # Plot detail. DO NOT delete.!!!!
-# x = np.append(x, handle.tot_file_shift['ecc03_2_y1x'])
-# y = np.append(y, handle.tot_file_shift['ecc03_2_y1y'])
-x = np.append(x, handle.tot_file_shift['ecc03_3_y1x'])
-y = np.append(y, handle.tot_file_shift['ecc03_3_y1y'])
-x = np.append(x, handle.tot_file_shift['ecc03_4_y1x'])
-y = np.append(y, -handle.tot_file_shift['ecc03_4_y1y'])
-x = np.append(x, handle.tot_file_shift['ecc03_5_y1x'])
-y = np.append(y, handle.tot_file_shift['ecc03_5_y1y'])
-# x = np.append(x, handle.tot_file_shift['ecc03_6_y1x'])
-# y = np.append(y, handle.tot_file_shift['ecc03_6_y1y'])
-x = np.append(x, handle.tot_file_shift['ecc03_7_y1x'])
-y = np.append(y, handle.tot_file_shift['ecc03_7_y1y'])
+# x = np.array([])
+# y = np.array([])
+# # x = np.append(x, handle.tot_file_shift['ecc03_1_y1x'])
+# # y = np.append(y, handle.tot_file_shift['ecc03_1_y1y'])                                # Plot detail. DO NOT delete.!!!!
+# # x = np.append(x, handle.tot_file_shift['ecc03_2_y1x'])
+# # y = np.append(y, handle.tot_file_shift['ecc03_2_y1y'])
+# x = np.append(x, handle.tot_file_shift['ecc03_3_y1x'])
+# y = np.append(y, handle.tot_file_shift['ecc03_3_y1y'])
+# x = np.append(x, handle.tot_file_shift['ecc03_4_y1x'])
+# y = np.append(y, -handle.tot_file_shift['ecc03_4_y1y'])
+# x = np.append(x, handle.tot_file_shift['ecc03_5_y1x'])
+# y = np.append(y, handle.tot_file_shift['ecc03_5_y1y'])
+# # x = np.append(x, handle.tot_file_shift['ecc03_6_y1x'])
+# # y = np.append(y, handle.tot_file_shift['ecc03_6_y1y'])
+# x = np.append(x, handle.tot_file_shift['ecc03_7_y1x'])
+# y = np.append(y, handle.tot_file_shift['ecc03_7_y1y'])
+#
+# xlim = 10
+# scale = 6.4/4.8
+# fig2 = plt.figure() # figsize=[6.4, 4.8]
+# ax2 = fig2.add_axes([0.15,0.15,0.7,0.7])
+# h, xedges, yedges, img = ax2.hist2d(x, y, bins=[80, 80],
+#                                    range=[[-xlim, xlim], [-xlim, xlim]])
+# norm = colors.Normalize(vmin = np.amin(h), vmax = np.amax(h))
+# cb = fig2.colorbar(cm.ScalarMappable(norm=norm), ax = ax2)
+# cb.set_label('Counts', fontsize = 15, rotation = -90, horizontalalignment = 'center', verticalalignment = 'bottom')
+# ax2.set_xlabel(r'Position($\mu$m)', fontsize = 15)
+# ax2.set_ylabel(r'Position($\mu$m)', fontsize = 15)
+#
+# xtick_temp = 2*np.arange(-0.5*xlim, 0.5*xlim + 1)
+# xticks = list(xtick_temp)
+# xticklabel = []
+# for ticks in xticks:
+#     xticklabel.append(str(ticks/6.25))
+# ax2.set_xticks(xticks)
+# ax2.set_xticklabels(xticklabel, fontsize = 10)
+# ax2.set_yticks(xticks)
+# ax2.set_yticklabels(xticklabel, fontsize = 10)
+# ax2.set_title('T4 position distribution. Ecc=0.3')
+# plt.show()
 
-xlim = 10
-scale = 6.4/4.8
-fig2 = plt.figure() # figsize=[6.4, 4.8]
-ax2 = fig2.add_axes([0.15,0.15,0.7,0.7])
-h, xedges, yedges, img = ax2.hist2d(x, y, bins=[80, 80],
-                                   range=[[-xlim, xlim], [-xlim, xlim]])
-norm = colors.Normalize(vmin = np.amin(h), vmax = np.amax(h))
-cb = fig2.colorbar(cm.ScalarMappable(norm=norm), ax = ax2)
-cb.set_label('Counts', fontsize = 15, rotation = -90, horizontalalignment = 'center', verticalalignment = 'bottom')
-ax2.set_xlabel(r'Position($\mu$m)', fontsize = 15)
-ax2.set_ylabel(r'Position($\mu$m)', fontsize = 15)
-
-xtick_temp = 2*np.arange(-0.5*xlim, 0.5*xlim + 1)
-xticks = list(xtick_temp)
-xticklabel = []
-for ticks in xticks:
-    xticklabel.append(str(ticks/6.25))
-ax2.set_xticks(xticks)
-ax2.set_xticklabels(xticklabel, fontsize = 10)
-ax2.set_yticks(xticks)
-ax2.set_yticklabels(xticklabel, fontsize = 10)
-ax2.set_title('T4 position distribution. Ecc=0.3')
+###################
+# Density profile #
+###################
+fig = plt.figure()
+ax = fig.add_subplot(1,2,1)
+ax.plot(handle.tot_density_hist['test_edge'], handle.tot_density_hist['test_density'])
+# ax.plot(handle.tot_density_hist['ecc06_edge'], handle.tot_density_hist['ecc06_density_y1'])
+# ax.plot(handle.tot_density_hist['ecc08_edge'], handle.tot_density_hist['ecc08_density_y1'])
+# ax.plot(handle.tot_density_hist['ecc09_edge'], handle.tot_density_hist['ecc09_density_y1'])
+# ax.legend(['ecc0', 'ecc0.6', 'ecc0.8', 'ecc0.9'])
+ax.set_xlabel('Normalized radius', fontsize=15)
+ax.set_ylabel(r'Density$(pts/pixel^2)$', fontsize=15)
+ax2 = fig.add_subplot(1,2,2)
+ax2.plot(handle.tot_density_hist['test_degedge'], handle.tot_density_hist['test_degdensity'])
 plt.show()
-
 def temperr():
     ecc09_delx = np.concatenate([handle.tot_vector['ecc09_1_delx'], handle.tot_vector['ecc09_2_delx'],
                                  handle.tot_vector['ecc09_3_delx'], handle.tot_vector['ecc09_4_delx'],
