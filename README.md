@@ -85,7 +85,7 @@ Density distribution calculation using normalize radius. The radius density is c
 
 **Input**: Data handle
 
-**Parameters**: dataset, data mode you want to process; bins: density calculation bins; area: the formal area of the ellipse in um^2. Default is 3.14; debug: default "False". This will allow function accept x and y pts and calculate the radius/radians distribution. For datachecking purpose only. "y1 and y3" represents the colour channel you want to plot.
+**Parameters**: dataset, data mode you want to process; bins: density calculation bins; area: the formal area of the ellipse in um^2. Default is 3.14; debug: default "False". This will allow function accept the coordinates of pts(x and y;dtype=np.array) and calculate the radius/radians distribution. For datachecking purpose only.
 
 **Output**: Data handle. *tot_density_hist* dictionary will be attached to the data handle. The keys for the dictionary are shown:
 
