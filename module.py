@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
+from scipy.integrate import quad
 import json
 
 # import the essential packages: numpy as np, matplotlib.pyplot as plt, sklearn.decomposition.PCA as pca
@@ -429,7 +430,6 @@ def bashclean(handle):
     except:
         print('Please run bashroi first.')
         return
-
 def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[], debug='False'):
     # Calculate the density distribution in function of both radius and angle. Data clean and shift is required.
     # dataset = 'vec': vector representation, 'pos': position representation. bins: bin number.
@@ -444,7 +444,7 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
         elif dataset =='vector':
             data = handle.tot_vec_overlay_clean
 
-        fils = 28 # Filter intensity
+        fils = 6.25**2 # Filter intensity
         area = area*fils # convert unit to pixel^2. Roughly. The size of the filter ellipse is also changed here.
 
         temp = ''
@@ -469,10 +469,13 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
                     # TODO: Vector cut. Strength of the filter is set by the variable "fils" above. Theoretically it should be 6.25**2.
                     # Microscope pixel size calibration is needed.
                     r_edge = np.linspace(0, 1, bins)
-                    x = delx[mask]
+                    d_edge = np.linspace(-np.pi, np.pi, bins)
+                    x = delx[mask] #Actual data
                     y = dely[mask]
+                    deg = np.arctan2(y, x)
                     r = x**2/(a**2)+y**2/(b**2)
-                    area_e = np.zeros(len(r_edge))
+                    area_e = np.zeros(len(r_edge)) #elliptical ring area
+                    area_r = np.zeros(len(d_edge))#elliptical pizza area
                     for i in range(len(r_edge)):
                         if i == 0:
                             area_e[i] = 2*a*b*r_edge[0]
@@ -486,24 +489,145 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
                             r0 = r_edge[i-1]
                         r1 = r_edge[i]
                         density[i] = (np.sum((r<r1)*(r>r0)))/area_e[i]
+                    rfunc = lambda theta: np.sqrt(1/(np.cos(theta)**2/a**2+np.sin(theta)**2/b**2))
+                    deg_density = np.zeros(len(d_edge))
+                    for j in range(len(d_edge)):
+                        if j == 0:
+                            continue
+                        else:
+                            d0 = d_edge[j-1]
+                        d1 = d_edge[j]
+                        area_r[j] = quad(rfunc, a=d0, b=d1)[0]
+                        deg_density[j] = np.sum((deg>d0)*(deg<d1))/area_r[j]
                     density_hist[temp+'_density'] = density
                     density_hist[temp+'_edge'] = r_edge
+                    density_hist[temp + '_degedge'] = d_edge
+                    density_hist[temp + '_degdensity'] = deg_density
             handle.tot_density_hist = density_hist
         else:
+            density_hist = {}
             for filename in data:
                 if temp != filename.split('_')[0]:
                     temp = filename.split('_')[0]
                     y1x = data[temp+'_y1x']
-                    y1y = data[temp + '_y1x']
-                    y3x = data[temp + '_y1x']
-                    y3y = data[temp + '_y1x']
-                    # TODO:
+                    y1y = data[temp + '_y1y']
+                    y3x = data[temp + '_y3x']
+                    y3y = data[temp + '_y3y']
+                    ecc = temp.replace('ecc', '')
+                    if ecc == '0':
+                        ecc = 0
+                    else:
+                        ecc = float('0.'+ecc.replace('0', ''))
+
+                    a = (area**2/(4*(1-ecc**2)))**(0.25) # rough half-long axis
+                    b = area/2/a # rough half-short axis
+
+                    r1 = y1x**2/(a**2)+y1y**2/(b**2)
+                    r3 = y3x ** 2 / (a ** 2) + y3y ** 2 / (b ** 2)
+                    mask1 = r1 < 1
+                    mask3 = r3 < 1
+                    # TODO: Vector cut. Strength of the filter is set by the variable "fils" above. Theoretically it should be 6.25**2.
+                    # Microscope pixel size calibration is needed.
+                    r_edge = np.linspace(0, 1, bins)
+                    d_edge = np.linspace(-np.pi, np.pi, bins)
+
+                    x1 = y1x[mask1]
+                    y1 = y1y[mask1]
+                    x3 = y3x[mask3]
+                    y3 = y3y[mask3]
+
+                    deg1 = np.arctan2(y1, x1)
+                    deg3 = np.arctan2(y3, x3)
+                    r1 = x1**2/(a**2)+y1**2/(b**2)
+                    r3 = x3 ** 2 / (a ** 2) + y3 ** 2 / (b ** 2)
+                    area_e = np.zeros(len(r_edge))
+                    area_r = np.zeros(len(d_edge))
+                    for i in range(len(r_edge)):
+                        if i == 0:
+                            area_e[i] = 2*a*b*r_edge[0]
+                        else:
+                            area_e[i] = 2 * a * b * (r_edge[i]-r_edge[i-1])
+
+                    rfunc = lambda theta: np.sqrt(1 / (np.cos(theta) ** 2 / a ** 2 + np.sin(theta) ** 2 / b ** 2))
+                    deg_density1 = np.zeros(len(d_edge))
+                    deg_density3 = np.zeros(len(d_edge))
+                    for j in range(len(d_edge)):
+                        if j == 0:
+                            continue
+                        else:
+                            d0 = d_edge[j - 1]
+                        d1 = d_edge[j]
+                        area_r[j] = quad(rfunc, a=d0, b=d1)[0]
+                        deg_density1[j] = np.sum((deg1 > d0) * (deg1 < d1)) / area_r[j]
+                        deg_density3[j] = np.sum((deg3 > d0) * (deg3 < d1)) / area_r[j]
+
+                    density1 = np.zeros(len(area_e))
+                    density3 = np.zeros(len(area_e))
+                    for i in range(len(r_edge)):
+                        if i == 0:
+                            rin = 0
+                        else:
+                            rin = r_edge[i-1]
+                        rout = r_edge[i]
+                        density1[i] = (np.sum((r1 < rout)*(r1 > rin))) / area_e[i]
+                        density3[i] = (np.sum((r3 < rout) * (r3 > rin))) / area_e[i]
+                    density_hist[temp+'_density_y1'] = density1
+                    density_hist[temp + '_density_y3'] = density3
+                    density_hist[temp+'_edge'] = r_edge
+                    density_hist[temp + '_degdensity_y1'] = deg_density1
+                    density_hist[temp + '_degdensity_y3'] = deg_density3
+                    density_hist[temp + '_degedge'] = d_edge
+            handle.tot_density_hist = density_hist
+        return handle
     elif debug=='True':
-        x = np.array(x)
-        y = np.array(y)
-        # TODO:
-    plt.show()
-    print(2)
+        print('Debug mode on. The section here is purely for debugging purpose(backdoor).')
+        density_hist = {}
+        delx = x
+        dely = y
+        x = np.power(delx, 2)
+        y = np.power(dely, 2)
+        a = (area ** 2 / (4 * (1 - ecc ** 2))) ** (0.25)  # rough half-long axis
+        b = area / 2 / a  # rough half-short axis
+        r = x / (a ** 2) + y / (b ** 2)
+        mask = r < 1
+        # TODO: Vector cut. Strength of the filter is set by the variable "fils" above. Theoretically it should be 6.25**2.
+        # Microscope pixel size calibration is needed.
+        r_edge = np.linspace(0, 1, bins)
+        d_edge = np.linspace(-np.pi, np.pi, bins)
+        x = delx[mask]  # Actual data
+        y = dely[mask]
+        deg = np.arctan2(y, x)
+        r = x ** 2 / (a ** 2) + y ** 2 / (b ** 2)
+        area_e = np.zeros(len(r_edge))  # elliptical ring area
+        area_r = np.zeros(len(d_edge))  # elliptical pizza area
+        for i in range(len(r_edge)):
+            if i == 0:
+                area_e[i] = 2 * a * b * r_edge[0]
+            else:
+                area_e[i] = 2 * a * b * (r_edge[i] - r_edge[i - 1])
+        density = np.zeros(len(area_e))
+        for i in range(len(r_edge)):
+            if i == 0:
+                r0 = 0
+            else:
+                r0 = r_edge[i - 1]
+            r1 = r_edge[i]
+            density[i] = (np.sum((r < r1) * (r > r0))) / area_e[i]
+        rfunc = lambda theta: np.sqrt(1 / (np.cos(theta) ** 2 / a ** 2 + np.sin(theta) ** 2 / b ** 2))
+        deg_density = np.zeros(len(d_edge))
+        for j in range(len(d_edge)):
+            if j == 0:
+                continue
+            else:
+                d0 = d_edge[j - 1]
+            d1 = d_edge[j]
+            area_r[j] = quad(rfunc, a=d0, b=d1)[0]
+            deg_density[j] = np.sum((deg > d0) * (deg < d1)) / area_r[j]
+        density_hist['test_density'] = density
+        density_hist['test_edge'] = r_edge
+        density_hist['test_degedge'] = d_edge
+        density_hist['test_degdensity'] = deg_density
+    handle.tot_density_hist = density_hist
 
 ###############################################
 if __name__=="__main__":
@@ -533,12 +657,15 @@ if __name__=="__main__":
     handle, tot_vector_clean = bashvector(handle, mode='clean')
     handle, tot_vec_overlay_clean = bashoverlay(handle, mode='clean', set='vector')
     handle, tot_pos_overlay_shift = bashoverlay(handle, mode='clean', set='position')
-    densitycal(handle, dataset = 'vector',bins=20)
+    handle = densitycal(handle, dataset='position', bins=50)
+    print(1)
 
 # Plot
-    plt.plot(handle.tot_density_hist['ecc0_edge'], handle.tot_density_hist['ecc0_density'])
-    plt.plot(handle.tot_density_hist['ecc06_edge'], handle.tot_density_hist['ecc06_density'])
-    plt.plot(handle.tot_density_hist['ecc08_edge'], handle.tot_density_hist['ecc08_density'])
-    plt.plot(handle.tot_density_hist['ecc09_edge'], handle.tot_density_hist['ecc09_density'])
-    plt.legend(['ecc0', 'ecc06', 'ecc08', 'ecc09'])
-    plt.show()
+plt.plot(handle.tot_density_hist['ecc0_degedge'], handle.tot_density_hist['ecc0_degdensity_y1'])
+plt.plot(handle.tot_density_hist['ecc06_degedge'], handle.tot_density_hist['ecc06_degdensity_y1'])
+plt.plot(handle.tot_density_hist['ecc08_degedge'], handle.tot_density_hist['ecc08_degdensity_y1'])
+plt.plot(handle.tot_density_hist['ecc09_degedge'], handle.tot_density_hist['ecc09_degdensity_y1'])
+plt.xlabel('Radians(Rad)', fontsize=15)
+plt.ylabel(r'Density$(pts/pixel^2)$', fontsize=15)
+plt.legend(['ecc=0', 'ecc=0.6', 'ecc=0.8', 'ecc=0.9'])
+plt.show()
