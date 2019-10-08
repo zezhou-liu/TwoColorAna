@@ -5,7 +5,7 @@ from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from scipy.integrate import quad
 import json
-
+from scipy.constants import Boltzmann, Avogadro, elementary_charge, epsilon_0
 # import the essential packages: numpy as np, matplotlib.pyplot as plt, sklearn.decomposition.PCA as pca
 # File container overall is dictionary. The naming format is eccentricity_videoclip_channel. For example: ecc03_2_y1x.
 # Please refer bashload function for the naming regulation.
@@ -20,7 +20,7 @@ class Datahandle:
         else:
             return np.loadtxt(self.filename)
 def testplot(x,y):
-    #   require import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt
     #   require
     fig = plt.figure()
     ax = fig.add_subplot(1,1,1)
@@ -29,7 +29,19 @@ def testplot(x,y):
     if type(y) == str:
         y = Datahandle(y)
     ax.plot(x.read(), y.read(), '+')
-
+def swapper(x, ind):
+    ## change the sign of the input data[ind]
+    ## input:   x, *.txt file needs to be swapped
+    ##          ind: 2 elements array-like data. [l_ind, h_ind]
+    filename = x
+    path = x.replace(x.split('/')[-1], '')
+    os.chdir(path)
+    data = np.loadtxt(filename)
+    index = np.arange(ind[0], ind[1] + 1)
+    data[index] = - data[index]
+    np.savetxt(x.split('/')[-1], data)
+    print(filename + 'index['+str(ind[0])+','+str(ind[1])+'] has been swapped!')
+    return
 ####################### Main process block ####################################
 # Bash handle.
 class handle:
@@ -177,7 +189,7 @@ def bashoverlay(handle, mode = 'raw', set = 'vector'):
         return handle, tot_vec_overlay
     except:
         print('No tot_vector attribute is defined for current input. Please refer to bashvector function.')
-        return
+    return
 def bashfree(handle, type='o'):
     # Please refer to 'Entropic Segregation of Polymers under Confinement' Pg107, Eq. 5.3.1. Author: Vorgelegt von Elena Minina.
     # 1.PCA alignment of the eclipse(require sklearn.decomposition.PCA module)
@@ -430,7 +442,7 @@ def bashclean(handle):
     except:
         print('Please run bashroi first.')
         return
-def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[], debug='False'):
+def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],ecc=0, debug='False'):
     # Calculate the density distribution in function of both radius and angle. Data clean and shift is required.
     # dataset = 'vec': vector representation, 'pos': position representation. bins: bin number.
     # debug: Testing mode. When turn to 'True', the function will accept x(np array) and y(np array) as the calculation data.
@@ -578,9 +590,10 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
                     density_hist[temp + '_degdensity_y3'] = deg_density3
                     density_hist[temp + '_degedge'] = d_edge
             handle.tot_density_hist = density_hist
-        return handle
     elif debug=='True':
         print('Debug mode on. The section here is purely for debugging purpose(backdoor).')
+        fils = 6.25**2
+        area = area*fils
         density_hist = {}
         delx = x
         dely = y
@@ -628,44 +641,84 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
         density_hist['test_degedge'] = d_edge
         density_hist['test_degdensity'] = deg_density
     handle.tot_density_hist = density_hist
+    return handle
 
+####################### Simple theory module ###################################
+# The functions listed here are to test different theoretical models and will be modified later.
+def dhl(concentration = 1, ph = 7.5):
+    # Estimate debye length of tris buffer. Debye-Huckel equation is applied.
+    avo = Avogadro # Avogadro constant
+    e = elementary_charge # Electron charge
+    tris_con = 10*10**(-3)*concentration # tris concentration mol/L
+    h_con = 10**(-ph) # H+ concentration mol/l
+    oh_con = 10**(-14)/h_con # OH- concentration mol/L
+    pka = 8.07 # from https://en.wikipedia.org/wiki/Tris
+
+
+    tris_conjugate = tris_con/((10**(-pka)/(h_con))+1)
+    tris_ini = tris_con - tris_conjugate
+    cl_con = tris_conjugate+h_con-oh_con
+    epsilon = 78 # Permittivity of 1X solution. Permittivity decreases linearly when the salt concentration is less than 1M.
+    t = 298 # 25celcius
+    def mol2n(x):
+        return avo*x*1000*(e**2)
+    return np.sqrt((epsilon_0*epsilon*Boltzmann*t)
+                   / (mol2n(tris_conjugate)
+                    + mol2n(h_con)
+                      +mol2n(oh_con)
+                      + mol2n(cl_con)))
+def bulk_fe(alpha=1, beta = 1, n=10):
+    # calculate the Flory eneryg:  van der Waals model + entropical energy.
+    # According to equ. (21)(22) in Walter's review paper.
+    # Input: alpha, prefactor describing the internal property of the chain. To be decided with experiment.
+    #       beta: prefactor describing the internal propertyy of the chain.
+    #       Comment: internal property includes: width, persist-length, temperature(explicitly) and so on(implicitly)
+    #       n: number of segments for one chain.
+    #       r: size of the chain
+    return alpha*n**(-1/5)+beta*n**(1/5)
+def degenn_fe(alpha=1, l=1, D=1):
+    # Calculate degenn free energy in nanochannel.
+    # Reference: Walter's review paper
+    # Input: l, size of the chain. Rg or end-to-end length.
+    #       D, effective diameter of the nanochannel.
+    return alpha*l/D**5/3
+def wall_depletion(r=0.1):
+    # Input:    r, depletion ratio
+    #       alpha, intensity of van der waals extraction
+    # Output:   concentration ratio
+    if r >= 1:
+        a = 1
+    else:
+        a = r**(5/3)
+    return a
+def blobsize():
+    # Calculate the blob-size of polymer in cavity
+    # Walter suggested to treat polymer as solution.
+
+    return
+def ellipse_para(ecc=0):
+    # output: width in um
+    area = 3.14
+    a = np.sqrt(area**2/(np.pi**2*(1-ecc**2)))
+    b = area/np.pi/a
+    return [a, b]
+def ellipse_width(ecc=0):
+    # output: x, x-position in um
+    #       y, y-position in um
+    [a, b] = ellipse_para(ecc)
+    x = np.linspace(-a, a, 200)
+    y = np.sqrt((1 - x**2/a**2) * b**2)
+    return x, y
+
+# TODO: Implement van der waals potential to wall depletion.
 ###############################################
 if __name__=="__main__":
+    # for ecc=0.8
+    ecc = 0.8
+    depth = 0.2 # depth in um
+    x, y = ellipse_width(ecc)
+    d_eff = np.sqrt(2*y*depth) # effective width
 
-    main_path = '/media/zezhou/Seagate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/tplasmid'
-    os.chdir(main_path)
-    cleanmode = 1  # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
-    # 0-raw data. Experimental data before shift to zero.
-    # Read files
-    handle, tot_file = bashload(main_path)
-    handle, tot_vector = bashvector(handle)
-    handle, tot_vec_overlay = bashoverlay(handle)
+    plt.plot(x, d_eff)
+    plt.show()
 
-    # Data clean
-    if cleanmode == 0:
-        handle, roi = bashroi(handle)  # ROI selection
-        handle, tot_file_clean = bashclean(handle)  # Delete points ouside ROI and attach mask to handle.
-        handle, tot_file_shift = bashshift(handle)  # Shift data to zero according to YOYO-3 channel
-    elif cleanmode == 1:
-        os.chdir(main_path + '/data')
-        tot_file_clean = json.load(open('tot_file_clean.json'))
-        for filename in tot_file_clean:
-            tot_file_clean[filename] = np.array(tot_file_clean[filename])
-        handle.tot_file_shift = tot_file_clean
-
-    # Cleaned data re-calculate
-    handle, tot_vector_clean = bashvector(handle, mode='clean')
-    handle, tot_vec_overlay_clean = bashoverlay(handle, mode='clean', set='vector')
-    handle, tot_pos_overlay_shift = bashoverlay(handle, mode='clean', set='position')
-    handle = densitycal(handle, dataset='position', bins=50)
-    print(1)
-
-# Plot
-plt.plot(handle.tot_density_hist['ecc0_degedge'], handle.tot_density_hist['ecc0_degdensity_y1'])
-plt.plot(handle.tot_density_hist['ecc06_degedge'], handle.tot_density_hist['ecc06_degdensity_y1'])
-plt.plot(handle.tot_density_hist['ecc08_degedge'], handle.tot_density_hist['ecc08_degdensity_y1'])
-plt.plot(handle.tot_density_hist['ecc09_degedge'], handle.tot_density_hist['ecc09_degdensity_y1'])
-plt.xlabel('Radians(Rad)', fontsize=15)
-plt.ylabel(r'Density$(pts/pixel^2)$', fontsize=15)
-plt.legend(['ecc=0', 'ecc=0.6', 'ecc=0.8', 'ecc=0.9'])
-plt.show()
