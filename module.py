@@ -29,19 +29,7 @@ def testplot(x,y):
     if type(y) == str:
         y = Datahandle(y)
     ax.plot(x.read(), y.read(), '+')
-def swapper(x, ind):
-    ## change the sign of the input data[ind]
-    ## input:   x, *.txt file needs to be swapped
-    ##          ind: 2 elements array-like data. [l_ind, h_ind]
-    filename = x
-    path = x.replace(x.split('/')[-1], '')
-    os.chdir(path)
-    data = np.loadtxt(filename)
-    index = np.arange(ind[0], ind[1] + 1)
-    data[index] = - data[index]
-    np.savetxt(x.split('/')[-1], data)
-    print(filename + 'index['+str(ind[0])+','+str(ind[1])+'] has been swapped!')
-    return
+
 ####################### Main process block ####################################
 # Bash handle.
 class handle:
@@ -61,6 +49,7 @@ def bashload(main_path):
     if os.path.exists(main_path):
         os.chdir(main_path)
     else:
+        print(main_path)
         print("No such directory, please check.")
         return ""
     subfolder = os.listdir()
@@ -383,7 +372,7 @@ def bashroi(handle):
             cp = ClickCap(fig)
             temp = i.split('_')[0] + '_' + i.split('_')[1]
             ax.plot(tot_vector[temp + '_delx'], tot_vector[temp + '_dely'], '+')
-            ax.set_xlim([-15, 15])
+            ax.set_xlim([-20, 20])
             ax.set_ylim([-12, 12])
             ax.set_title(temp+'_ROI selection')
             ax.grid(b=True, which='both', axis='both')
@@ -442,15 +431,15 @@ def bashclean(handle):
     except:
         print('Please run bashroi first.')
         return
-def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],ecc=0, debug='False'):
+def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],ecc=0.0, debug=False):
     # Calculate the density distribution in function of both radius and angle. Data clean and shift is required.
     # dataset = 'vec': vector representation, 'pos': position representation. bins: bin number.
     # debug: Testing mode. When turn to 'True', the function will accept x(np array) and y(np array) as the calculation data.
     # area: ellipse area(um^2). It shows the generic size of ellipse
     # No ellipse fitting in the end. Hard to justify if there is any mismatch.
-
+    # Output: handle
     x0 = [15, 15]
-    if debug == 'False':
+    if debug == False:
         if dataset == 'position':
             data = handle.tot_pos_overlay_shift
         elif dataset =='vector':
@@ -590,7 +579,8 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
                     density_hist[temp + '_degdensity_y3'] = deg_density3
                     density_hist[temp + '_degedge'] = d_edge
             handle.tot_density_hist = density_hist
-    elif debug=='True':
+        return handle
+    elif debug==True:
         print('Debug mode on. The section here is purely for debugging purpose(backdoor).')
         fils = 6.25**2
         area = area*fils
@@ -640,11 +630,12 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
         density_hist['test_edge'] = r_edge
         density_hist['test_degedge'] = d_edge
         density_hist['test_degdensity'] = deg_density
-    handle.tot_density_hist = density_hist
-    return handle
+        return density_hist
 
-####################### Simple theory module ###################################
+####################### Toolkits ###################################
 # The functions listed here are to test different theoretical models and will be modified later.
+# Some simplt toolkits are provided to pre-process the data.
+
 def dhl(concentration = 1, ph = 7.5):
     # Estimate debye length of tris buffer. Debye-Huckel equation is applied.
     avo = Avogadro # Avogadro constant
@@ -709,16 +700,81 @@ def ellipse_width(ecc=0):
     x = np.linspace(-a, a, 200)
     y = np.sqrt((1 - x**2/a**2) * b**2)
     return x, y
-
+def linearshift(path):
+    # Shift the data linearly with the input anchor.
+    # Anchor spot is defined as the motion of CM of YOYO-3 channel(T4). The CM is fitted linearly and all the frames are
+    # shifted according to the fitting.
+    # CM is calculated by stackCM in imagej
+    # INPUT:    path, path of the data. E.g. ./201909_ecc09/1 If we want to shift all the files inside.
+    os.chdir(path)
+    y1x = np.loadtxt(path + '/y1x.txt')
+    y1y = np.loadtxt(path + '/y1y.txt')
+    y3x = np.loadtxt(path + '/y3x.txt')
+    y3y = np.loadtxt(path + '/y3y.txt')
+    class ClickCap:
+        def __init__(self, fig):
+            self.xs = []
+            self.ys = []
+            self.times = 0
+            self.cid = fig.canvas.mpl_connect('button_press_event', self)
+        def __call__(self, event):
+            if self.times != 1:
+                self.xs.append(event.xdata)
+                self.ys.append(event.ydata)
+                print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+                      ('double' if event.dblclick else 'single', event.button,
+                       event.x, event.y, event.xdata, event.ydata))
+                self.times = self.times + 1
+            else:
+                self.xs.append(event.xdata)
+                self.ys.append(event.ydata)
+                print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
+                      ('double' if event.dblclick else 'single', event.button,
+                       event.x, event.y, event.xdata, event.ydata))
+                self.times = 0
+                plt.close('all')
+    fig = plt.figure()
+    cp = ClickCap(fig)
+    ax = fig.add_subplot(111)
+    ax.plot(y3x, y3y, '+')
+    ax.set_title('Shift ROI selection')
+    plt.show()
+    x = cp.xs
+    y = cp.ys
+    mask = (y3x>min(x))*(y3x<max(x))*(y3y<max(y))*(y3y>min(y))
+    y3x = y3x[mask]
+    y3y = y3y[mask]
+    frames = np.arange(0, len(y3x))
+    px = np.polyfit(frames, y3x, 1)
+    py = np.polyfit(frames, y3y, 1)
+    fitx = px[0] * frames + px[1]
+    fity = py[0] * frames + py[1]
+    y3x = y3x - fitx
+    y3y = y3y - fity
+    y1x = y1x - fitx
+    y1y = y1y - fity
+    np.savetxt('y1x.txt', y1x)
+    np.savetxt('y3x.txt', y3x)
+    np.savetxt('y1y.txt', y1y)
+    np.savetxt('y3y.txt', y3y)
+    plt.plot(y3x, y3y, '+')
+    plt.plot(y1x, y1y, '+')
+    plt.show()
+    return
+def swapper(x, ind):
+    ## change the sign of the input data[ind]
+    ## input:   x, Path of the *.txt file needs to be swapped
+    ##          ind: 2 elements array-like data. [l_ind, h_ind]
+    filename = x
+    path = x.replace(x.split('/')[-1], '')
+    os.chdir(path)
+    data = np.loadtxt(filename)
+    index = np.arange(ind[0], ind[1] + 1)
+    data[index] = - data[index]
+    np.savetxt(x.split('/')[-1], data)
+    print(filename + 'index['+str(ind[0])+','+str(ind[1])+'] has been swapped!')
+    return
 # TODO: Implement van der waals potential to wall depletion.
 ###############################################
-if __name__=="__main__":
-    # for ecc=0.8
-    ecc = 0.8
-    depth = 0.2 # depth in um
-    x, y = ellipse_width(ecc)
-    d_eff = np.sqrt(2*y*depth) # effective width
-
-    plt.plot(x, d_eff)
-    plt.show()
-
+if __name__ == "__main__":
+    print(1)
