@@ -47,7 +47,7 @@ set: Set parameter controls the data you want to overlay. 'vector' set will calc
 | raw   | vector   | handle.tot_vec_overlay       | ecc03_delx |
 | raw   | position | handle.tot_pos_overlay       | ecc03_y1x  |
 | clean | vector   | handle.tot_vec_overlay_clean | ecc03_delx |
-| clean | position | handle.tot_pos_overlay_clean | ecc03_y1x  |
+| clean | position | handle.tot_pos_overlay_shift | ecc03_y1x  |
 
 ### bashfree(handle)
 Calculate the free energy landscape of the vector. PCA is applied to extract the It requires *handle.tot_vector* and *handle.tot_vec_overlay*. Please refer page 107 of [this thesis](https://pdfs.semanticscholar.org/bb60/688e23a2057fa7e27d12c9e29a3bfbe66264.pdf) for free energy calculation. This module is compatible with two identical chain experiment.
@@ -105,5 +105,9 @@ Example of use:
   handle, tot_vec_overlay = module.bashvector(handle)
   print(handle.tot_vec_overlay['ecc03_delx'])
 ```
+
+# Current work
+Batch auto-correlation, batch cross-correlation, batch diffusion fitting.
+Nonlinear PDE solving(start a new script). 
 # Contact
 If you have any questions, please send an email to zezhou_liu@outlook.com directly.
