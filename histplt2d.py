@@ -22,9 +22,9 @@ if cleanmode == 0:
     handle1, tot_file_shift = module.bashshift(handle1) # Shift data to zero according to YOYO-3 channel
 elif cleanmode == 1:
     os.chdir(main_path+'/data')
-    tot_file_clean = json.load(open('tot_file_clean.json'))
+    tot_file_clean = json.load(open('tot_file_clean.json')) # data is saved in list format
     for filename in tot_file_clean:
-        tot_file_clean[filename] = np.array(tot_file_clean[filename])
+        tot_file_clean[filename] = np.array(tot_file_clean[filename]) # Changing format to array
     handle1.tot_file_shift = tot_file_clean
 
 # Cleaned data re-calculate
@@ -39,6 +39,7 @@ handle1, tot_pos_overlay_shift = module.bashoverlay(handle1, mode='clean', set='
 ###############
 # Details of the plot data are in function. The unlisted data are directly from datahandle.
 ##########################
+# T4-Plasmid
 def ecc0_tp():
     return handle1.tot_pos_overlay_shift['ecc0_y1x'], handle1.tot_pos_overlay_shift['ecc0_y1y']
 def ecc06_tp():
@@ -86,6 +87,62 @@ def ecc09_tp():
     x = np.append(x, handle1.tot_file_shift['ecc09_9_y1x'])
     y = np.append(y, handle1.tot_file_shift['ecc09_9_y1y'])
     return x, y
+def ecc095_tp():
+    x1 = np.array([])
+    y1 = np.array([])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_1_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_1_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_2_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_2_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_3_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_3_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_4_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_4_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_5_y1x'][:3000])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_5_y1y'][:3000])
+    x1 = np.append(x1, -handle1.tot_file_shift['ecc095_5_y1x'][3000:])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_5_y1y'][3000:])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_6_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_6_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_7_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_7_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_8_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_8_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_9_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_9_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_10_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_10_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_11_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_11_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_12_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_12_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_13_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_13_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_14_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_14_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc095_15_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc095_15_y1y'])
+    return  x1, y1
+def ecc098_tp():
+    x1 = np.array([])
+    y1 = np.array([])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_1_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc098_1_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_2_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc098_2_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_3_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc098_3_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_4_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc098_4_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_5_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc098_5_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_6_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc098_6_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_8_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc098_8_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_9_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc098_9_y1y'])
+    return x1, y1
 def ecc0995_tp():
 # ecc0995(T4-plasmid)
     x1 = np.array([])
@@ -96,7 +153,34 @@ def ecc0995_tp():
     y1 = np.append(y1, handle1.tot_file_shift['ecc0995_2_y1y'])
     x1 = np.append(x1, handle1.tot_file_shift['ecc0995_3_y1x'])
     y1 = np.append(y1, handle1.tot_file_shift['ecc0995_3_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc0995_4_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_4_y1y'])
+    # x1 = np.append(x1, handle1.tot_file_shift['ecc0995_5_y1x']) # This set goes to the end. TODO: Check original video. Why is the alignment different?
+    # y1 = np.append(y1, handle1.tot_file_shift['ecc0995_5_y1y'])
+    # x1 = np.append(x1, handle1.tot_file_shift['ecc0995_6_y1x'])
+    # y1 = np.append(y1, handle1.tot_file_shift['ecc0995_6_y1y'])
+    x1 = np.append(x1, -handle1.tot_file_shift['ecc0995_7_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_7_y1y'])
+    x1 = np.append(x1, -handle1.tot_file_shift['ecc0995_8_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_8_y1y'])
+    x1 = np.append(x1, -handle1.tot_file_shift['ecc0995_9_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_9_y1y'])
+    x1 = np.append(x1, -handle1.tot_file_shift['ecc0995_10_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_10_y1y'])
+    x1 = np.append(x1, -handle1.tot_file_shift['ecc0995_11_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_11_y1y'])
+    x1 = np.append(x1, -handle1.tot_file_shift['ecc0995_12_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_12_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc0995_13_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_13_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc0995_14_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_14_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc0995_15_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_15_y1y'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc0995_16_y1x'])
+    y1 = np.append(y1, handle1.tot_file_shift['ecc0995_16_y1y'])
     return x1, y1
+
 def ecc0995_lp():
 # ecc0995(lambda-plasmid)
     x = np.array([])
@@ -112,9 +196,9 @@ def ecc0995_lp():
     return x, y
 
 ###Data setup####
-x, y = ecc09_tp()
-xlim = 10
-bins = 80
+x, y = ecc0995_tp()
+xlim = 20
+bins = 100
 cmap = 'YlOrRd'
 ###############
 
