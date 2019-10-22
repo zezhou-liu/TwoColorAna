@@ -53,7 +53,8 @@ def bashload(main_path):
         print("No such directory, please check.")
         return ""
     subfolder = os.listdir()
-
+    print('Reading:'+main_path)
+    print('There are:'+str(len(subfolder))+' files inside')
     for i in subfolder:
         if 'ecc' not in i:
             continue
@@ -72,14 +73,18 @@ def bashload(main_path):
                 prefix = i+'_'+j
                 filename = os.listdir()
             for k in filename:
+                if ('y1x' not in k) and ('y1y' not in k) and ('y3x' not in k) and ('y3y' not in k):
+                    print(prefix+'/'+str(k)+' is skipped.')
+                    continue
                 fname_temp = prefix + '_' + k[:3]
                 fname_temp = fname_temp.split('_')[1] + '_' + fname_temp.split('_')[2]+'_' + fname_temp.split('_')[3]
                 fpath_temp = temp + '/' + k
-                print('Reading files from:', fpath_temp)
+                # print('Reading files from:', fpath_temp)
                 tot_file[fname_temp] = np.loadtxt(fpath_temp)
     a = handle
     a.tot_file = tot_file
     a.main_path = main_path
+    print(str(len(a.tot_file))+' files are imported.')
     return a, tot_file
 def bashvector(handle, mode='raw'):
     # Calculate the vector separation for each video
@@ -372,7 +377,7 @@ def bashroi(handle):
             cp = ClickCap(fig)
             temp = i.split('_')[0] + '_' + i.split('_')[1]
             ax.plot(tot_vector[temp + '_delx'], tot_vector[temp + '_dely'], '+')
-            ax.set_xlim([-20, 20])
+            ax.set_xlim([-25, 25])
             ax.set_ylim([-12, 12])
             ax.set_title(temp+'_ROI selection')
             ax.grid(b=True, which='both', axis='both')
@@ -700,17 +705,29 @@ def ellipse_width(ecc=0):
     x = np.linspace(-a, a, 200)
     y = np.sqrt((1 - x**2/a**2) * b**2)
     return x, y
-def linearshift(path):
+def linearshift(path, cframes=None):
     # Shift the data linearly with the input anchor.
     # Anchor spot is defined as the motion of CM of YOYO-3 channel(T4). The CM is fitted linearly and all the frames are
     # shifted according to the fitting.
     # CM is calculated by stackCM in imagej
     # INPUT:    path, path of the data. E.g. ./201909_ecc09/1 If we want to shift all the files inside.
     os.chdir(path)
-    y1x = np.loadtxt(path + '/y1x.txt')
-    y1y = np.loadtxt(path + '/y1y.txt')
-    y3x = np.loadtxt(path + '/y3x.txt')
-    y3y = np.loadtxt(path + '/y3y.txt')
+    y1x_org = np.loadtxt(path + '/y1x.txt')
+    ftot = len(y1x_org)
+    print(ftot)
+    y1x = y1x_org
+    y1y_org = np.loadtxt(path + '/y1y.txt')
+    y1y = y1y_org
+    y3x_org = np.loadtxt(path + '/y3x.txt')
+    y3x = y3x_org
+    y3y_org = np.loadtxt(path + '/y3y.txt')
+    y3y = y3y_org
+    if cframes !=None:
+        y1x = y1x[cframes[0]:cframes[1]]
+        y1y = y1y[cframes[0]:cframes[1]]
+        y3x = y3x[cframes[0]:cframes[1]]
+        y3y = y3y[cframes[0]:cframes[1]]
+
     class ClickCap:
         def __init__(self, fig):
             self.xs = []
@@ -744,6 +761,8 @@ def linearshift(path):
     mask = (y3x>min(x))*(y3x<max(x))*(y3y<max(y))*(y3y>min(y))
     y3x = y3x[mask]
     y3y = y3y[mask]
+    y1x = y1x[mask]
+    y1y = y1y[mask]
     frames = np.arange(0, len(y3x))
     px = np.polyfit(frames, y3x, 1)
     py = np.polyfit(frames, y3y, 1)
@@ -753,10 +772,51 @@ def linearshift(path):
     y3y = y3y - fity
     y1x = y1x - fitx
     y1y = y1y - fity
-    np.savetxt('y1x.txt', y1x)
-    np.savetxt('y3x.txt', y3x)
-    np.savetxt('y1y.txt', y1y)
-    np.savetxt('y3y.txt', y3y)
+    if cframes == None:
+        np.savetxt('y1x.txt', y1x)
+        np.savetxt('y3x.txt', y3x)
+        np.savetxt('y1y.txt', y1y)
+        np.savetxt('y3y.txt', y3y)
+        np.savetxt('shiftmask.txt', mask)
+        print('Video length is:' + str(len(y1x)))
+    elif cframes[0] == 0:
+        y1x = np.concatenate((y1x, y1x_org[(cframes[1]):]-np.mean(y3x_org[(cframes[1]):])))
+        y1y = np.concatenate((y1y, y1y_org[(cframes[1]):]-np.mean(y3y_org[(cframes[1]):])))
+        y3x = np.concatenate((y3x, y3x_org[(cframes[1]):]-np.mean(y3x_org[(cframes[1]):])))
+        y3y = np.concatenate((y3y, y3y_org[(cframes[1]):]-np.mean(y3y_org[(cframes[1]):])))
+        np.savetxt('y1x.txt', y1x)
+        np.savetxt('y3x.txt', y3x)
+        np.savetxt('y1y.txt', y1y)
+        np.savetxt('y3y.txt', y3y)
+        np.savetxt('shiftmask.txt', mask)
+        print('Video length is:'+str(len(y1x)))
+    elif cframes[1] >= ftot:
+        y1x = np.concatenate((y1x_org[0: cframes[0]] - np.mean(y3x_org[0: cframes[0]]), y1x))
+        y1y = np.concatenate((y1y_org[0: cframes[0]] - np.mean(y3y_org[0: cframes[0]]), y1y))
+        y3x = np.concatenate((y3x_org[0: cframes[0]] - np.mean(y3x_org[0: cframes[0]]), y3x))
+        y3y = np.concatenate((y3y_org[0: cframes[0]] - np.mean(y3y_org[0: cframes[0]]), y3y))
+        np.savetxt('y1x.txt', y1x)
+        np.savetxt('y3x.txt', y3x)
+        np.savetxt('y1y.txt', y1y)
+        np.savetxt('y3y.txt', y3y)
+        np.savetxt('shiftmask.txt', mask)
+        print('Video length is:' + str(len(y1x)))
+    else:
+        y1x = np.concatenate((y1x_org[0: cframes[0]] - np.mean(y3x_org[0: cframes[0]]), y1x))
+        y1y = np.concatenate((y1y_org[0: cframes[0]] - np.mean(y3y_org[0: cframes[0]]), y1y))
+        y3x = np.concatenate((y3x_org[0: cframes[0]] - np.mean(y3x_org[0: cframes[0]]), y3x))
+        y3y = np.concatenate((y3y_org[0: cframes[0]] - np.mean(y3y_org[0: cframes[0]]), y3y))
+        y1x = np.concatenate((y1x, y1x_org[(cframes[1]):] - np.mean(y3x_org[(cframes[1]):])))
+        y1y = np.concatenate((y1y, y1y_org[(cframes[1]):] - np.mean(y3y_org[(cframes[1]):])))
+        y3x = np.concatenate((y3x, y3x_org[(cframes[1]):] - np.mean(y3x_org[(cframes[1]):])))
+        y3y = np.concatenate((y3y, y3y_org[(cframes[1]):] - np.mean(y3y_org[(cframes[1]):])))
+
+        np.savetxt('y1x.txt', y1x)
+        np.savetxt('y3x.txt', y3x)
+        np.savetxt('y1y.txt', y1y)
+        np.savetxt('y3y.txt', y3y)
+        np.savetxt('shiftmask.txt', mask)
+        print('Video length is:' + str(len(y1x)))
     plt.plot(y3x, y3y, '+')
     plt.plot(y1x, y1y, '+')
     plt.show()
