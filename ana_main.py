@@ -7,7 +7,7 @@ import json
 import os
 
 main_path = "/media/zezhou/Seagate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/datafterlinearshift/tplasmid"
-cleanmode = 1 # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
+cleanmode = 0 # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
               # 0-raw data. Experimental data before shift to zero.
 # Read files
 handle1, tot_file = module.bashload(main_path)
@@ -280,8 +280,8 @@ def oldvisul():
 
         fig2 = plt.figure()
         ax2 = fig2.add_subplot(1, 1, 1)
-        ax2.plot(handle.tot_file['ecc09_1_y3x'], handle.tot_file['ecc09_1_y3y'], '+')
-        ax2.plot(handle.tot_file['ecc09_2_y3x'], handle.tot_file['ecc09_2_y3y'], '+')
+        ax2.plot(handle1.tot_file['ecc09_1_y3x'], handle1.tot_file['ecc09_1_y3y'], '+')
+        ax2.plot(handle1.tot_file['ecc09_2_y3x'], handle1.tot_file['ecc09_2_y3y'], '+')
         # ax2.plot(handle.tot_file['ecc09_3_y3x'], handle.tot_file['ecc09_3_y3y'], '+')
         # ax2.plot(handle.tot_file['ecc09_4_y3x'], handle.tot_file['ecc09_4_y3y'], '+')
         # ax2.plot(handle.tot_file['ecc09_5_y3x'], handle.tot_file['ecc09_5_y3y'], '+')
