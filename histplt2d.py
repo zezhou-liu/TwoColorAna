@@ -6,6 +6,7 @@ import matplotlib.colors as colors
 from matplotlib.colors import Normalize
 import json
 import os
+import matplotlib.colors as mcolors
 
 main_path = "/media/zezhou/Seagate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/datafterlinearshift/tplasmid"
 cleanmode = 1 # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
@@ -41,7 +42,13 @@ handle1, tot_pos_overlay_shift = module.bashoverlay(handle1, mode='clean', set='
 ##########################
 # T4-Plasmid
 def ecc0_tp():
-    return handle1.tot_pos_overlay_shift['ecc0_y1x'], handle1.tot_pos_overlay_shift['ecc0_y1y']
+    x = np.array([])
+    y = np.array([])
+    x = np.append(x, handle1.tot_file_shift['ecc0_1_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc0_1_y1y'])
+    x = x - np.mean(x)
+    print('tot_pos_overlay_shift ecc0:' + str(np.mean(x)))
+    return x, y
 def ecc06_tp():
     # ecc03
     x = np.array([])
@@ -60,9 +67,31 @@ def ecc06_tp():
     y = np.append(y, handle1.tot_file_shift['ecc06_6_y1y'])
     x = np.append(x, handle1.tot_file_shift['ecc06_7_y1x'])
     y = np.append(y, handle1.tot_file_shift['ecc06_7_y1y'])
+    x = x - np.mean(x)
+    print('tot_pos_overlay_shift ecc06:' + str(np.mean(x)))
     return x, y
 def ecc08_tp():
-    return handle1.tot_pos_overlay_shift['ecc08_y1x'], handle1.tot_pos_overlay_shift['ecc08_y1y']
+    x = np.array([])
+    y = np.array([])
+    x = np.append(x, handle1.tot_file_shift['ecc08_1_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc08_1_y1y'])  # Plot detail. DO NOT delete.!!!!
+    x = np.append(x, handle1.tot_file_shift['ecc08_2_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc08_2_y1y'])
+    x = np.append(x, handle1.tot_file_shift['ecc08_3_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc08_3_y1y'])
+    x = np.append(x, handle1.tot_file_shift['ecc08_4_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc08_4_y1y'])
+    x = np.append(x, handle1.tot_file_shift['ecc08_5_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc08_5_y1y'])
+    x = np.append(x, handle1.tot_file_shift['ecc08_6_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc08_6_y1y'])
+    x = np.append(x, handle1.tot_file_shift['ecc08_7_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc08_7_y1y'])
+    x = np.append(x, handle1.tot_file_shift['ecc08_8_y1x'])
+    y = np.append(y, handle1.tot_file_shift['ecc08_8_y1y'])
+    x = x - np.mean(x)
+    print('tot_pos_overlay_shift ecc08:' + str(np.mean(x)))
+    return x, y
 def ecc09_tp():
     x = np.array([])
     y = np.array([])
@@ -126,11 +155,11 @@ def ecc095_tp():
 def ecc098_tp():
     x1 = np.array([])
     y1 = np.array([])
-    x1 = np.append(x1, handle1.tot_file_shift['ecc098_1_y1x'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_1_y1x']) #1
     y1 = np.append(y1, handle1.tot_file_shift['ecc098_1_y1y'])
-    x1 = np.append(x1, handle1.tot_file_shift['ecc098_2_y1x'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_2_y1x']) #1
     y1 = np.append(y1, handle1.tot_file_shift['ecc098_2_y1y'])
-    x1 = np.append(x1, handle1.tot_file_shift['ecc098_3_y1x'])
+    x1 = np.append(x1, handle1.tot_file_shift['ecc098_3_y1x']) #1
     y1 = np.append(y1, handle1.tot_file_shift['ecc098_3_y1y'])
     x1 = np.append(x1, handle1.tot_file_shift['ecc098_4_y1x'])
     y1 = np.append(y1, handle1.tot_file_shift['ecc098_4_y1y'])
@@ -142,6 +171,8 @@ def ecc098_tp():
     y1 = np.append(y1, handle1.tot_file_shift['ecc098_8_y1y'])
     x1 = np.append(x1, handle1.tot_file_shift['ecc098_9_y1x'])
     y1 = np.append(y1, handle1.tot_file_shift['ecc098_9_y1y'])
+    x1 = x1 - np.mean(x1)
+    print('tot_pos_overlay_shift ecc098:'+str(np.mean(x1)))
     return x1, y1
 def ecc0995_tp():
 # ecc0995(T4-plasmid)
@@ -180,7 +211,6 @@ def ecc0995_tp():
     x1 = np.append(x1, handle1.tot_file_shift['ecc0995_16_y1x'])
     y1 = np.append(y1, handle1.tot_file_shift['ecc0995_16_y1y'])
     return x1, y1
-
 def ecc0995_lp():
 # ecc0995(lambda-plasmid)
     x = np.array([])
@@ -195,50 +225,99 @@ def ecc0995_lp():
     y = np.append(y, handle1.tot_file_shift['ecc0995_3_y1y'])
     return x, y
 
+## Cavity overlay
+def cav_ecc06():
+    a, b = module.ellipse_para(ecc=0)
+    n = 1000 # sampling pts
+    t = np.linspace(0, 2*np.pi, n)
+    x = a * np.cos(t)
+    y = b * np.sin(t)
+    return x, y
+
 ###Data setup####
-x, y = ecc0995_tp()
-xlim = 20
-bins = 100
+x0, y0 = ecc0_tp()
+x1, y1 = ecc06_tp()
+x2, y2 = ecc08_tp()
+x3, y3 = ecc09_tp()
+x4, y4 = ecc095_tp()
+x5, y5 = ecc098_tp()
+x6, y6 = ecc0995_tp()
+X = [x0, x1, x2, x3, x4, x5, x6]
+Y = [y0, y1, y2, y3, y4, y5, y6]
+# savename = 'Ecc0995_p.eps'
+savename_tot = ['Ecc0_p.png', 'Ecc06_p.png', 'Ecc08_p.png', 'Ecc09_p.png',
+            'Ecc095_p.png', 'Ecc098_p.png', 'Ecc0995_p.png']
+figtitle_tot = ['Plasmid position distribution Ecc=0', 'Plasmid position distribution Ecc=0.6',
+            'Plasmid position distribution Ecc=0.8', 'Plasmid position distribution Ecc=0.9',
+            'Plasmid position distribution Ecc=0.95', 'Plasmid position distribution Ecc=0.98',
+            'Plasmid position distribution Ecc=0.995']
+
+savepath = '/media/zezhou/Se' \
+           'agate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/Plots/tplasmid/hist/'
+xlim_tot = [10, 10, 10, 12, 12, 16, 16]
+
+bins = 80
 cmap = 'YlOrRd'
+fontsize = 20
+labelsize = 15
+cb_fontsize = 12
 ###############
+fig2 = plt.figure(figsize=[25.6, 18.2]) # figs8ize=[6.4, 4.8]
+for i in range(7):
+    x = X[i]
+    y = Y[i]
+    xlim = xlim_tot[i]
+    figtitle = figtitle_tot[i]
+    savename = savename_tot[i]
+    # scale = 6.4/4.8
+    ax2 = fig2.add_subplot(3,3,i+1) # Axes location. Right now it's an easy going version.
 
+    # Rescaling
+    h = np.histogram2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], density=True)
+    ## scale the color
+    sh = h[0][int(bins/2-10):int(bins/2+10), int(bins/2-10):int(bins/2+10)]
+    ####################
 
-# scale = 6.4/4.8
-fig2 = plt.figure() # figsize=[6.4, 4.8]
-ax2 = fig2.add_axes([0.15,0.15,0.7,0.7]) # Axes location
+    # 2d hist
+    h, xedges, yedges, img = ax2.hist2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], cmap=cmap, vmin=np.min(sh),
+                                        vmax=np.max(h[0]), density=True, norm=mcolors.PowerNorm(0.7))
+    
+    norm = colors.Normalize(vmin = np.min(h), vmax = np.max(h))
+    # colorbar
+    cb = fig2.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), ax = ax2)
+    cb.set_label('Probability', fontsize = fontsize, rotation = -90, horizontalalignment = 'center', verticalalignment = 'bottom')
 
-# Rescaling
-h = np.histogram2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], density=True)
-## scale the color
-sh = h[0][int(bins/2-10):int(bins/2+10), int(bins/2-10):int(bins/2+10)]
-####################
+    # axes label
+    ax2.set_xlabel(r'Position($\mu$m)', fontsize = fontsize)
+    ax2.set_ylabel(r'Position($\mu$m)', fontsize = fontsize)
 
-# 2d hist
-h, xedges, yedges, img = ax2.hist2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], cmap=cmap, vmin=np.min(sh), vmax=np.max(h[0]), density=True)
-norm = colors.Normalize(vmin = np.min(h), vmax = np.max(h))
-# colorbar
-cb = fig2.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), ax = ax2)
-cb.set_label('Probability', fontsize = 15, rotation = -90, horizontalalignment = 'center', verticalalignment = 'bottom')
+    # tick location and tick label
+    xtick_temp = np.arange(0, xlim, step = 6.25)
+    xtick_temp = np.concatenate((-xtick_temp, xtick_temp))
+    xtick_temp = np.sort(xtick_temp)
+    xtick_temp = np.delete(xtick_temp, len(xtick_temp)/2 - 1 )
+    xticks = list(xtick_temp)
+    xticklabel = []
+    for ticks in xticks:
+        xticklabel.append(str(ticks/6.25))
+    ax2.set_xticks(xticks)
+    ax2.set_yticks(xticks)
 
-# axes label
-ax2.set_xlabel(r'Position($\mu$m)', fontsize = 15)
-ax2.set_ylabel(r'Position($\mu$m)', fontsize = 15)
+    # Tick label. Uncomment below to show unit in um
+    ax2.set_xticklabels(xticklabel, fontsize = labelsize)
+    ax2.set_yticklabels(xticklabel, fontsize = labelsize)
 
-# tick location and tick label
-xtick_temp = np.arange(0, xlim + 1, step = 6.25/2)
-xtick_temp = np.concatenate((-xtick_temp, xtick_temp))
-xtick_temp = np.sort(xtick_temp)
-xtick_temp = np.delete(xtick_temp, len(xtick_temp)/2 - 1 )
-xticks = list(xtick_temp)
-xticklabel = []
-for ticks in xticks:
-    xticklabel.append(str(ticks/6.25))
-ax2.set_xticks(xticks)
-ax2.set_xticklabels(xticklabel, fontsize = 10)
-ax2.set_yticks(xticks)
-ax2.set_yticklabels(xticklabel, fontsize = 10)
+    # Grid
+    # ax2.grid(b=True, ls = '--', dash_capstyle='round')
 
-# Title
-ax2.set_title('T4 position distribution. Ecc=0.995')
+    # Scale bar
 
+    # Cavity overlay
+    # ax2.plot(x, y, '-')
+
+    # Title
+    # ax2.set_title(figtitle, fontsize = fontsize)
+fig2.suptitle('Plasmid distribution in different cavities')
+os.chdir(savepath)
+plt.savefig('histall.eps')
 plt.show()
