@@ -834,7 +834,32 @@ def swapper(x, ind):
     np.savetxt(x.split('/')[-1], data)
     print(filename + 'index['+str(ind[0])+','+str(ind[1])+'] has been swapped!')
     return
+def remover(path, rframes):
+    # rframes:[remove start, remove end]
+    os.chdir(path)
+    y1x = np.loadtxt(path+'/y1x.txt')
+    y1y = np.loadtxt(path + '/y1y.txt')
+    y3x = np.loadtxt(path + '/y3x.txt')
+    y3y = np.loadtxt(path + '/y3y.txt')
+    tot = len(y1x)
+    if rframes[0]<0:
+        rframes[0] = 0
+    elif rframes[1]>=tot:
+        rframes[1] = tot
+    ind = np.arange(rframes[0], rframes[1])
+    y1x = np.delete(y1x, ind)
+    y1y = np.delete(y1y, ind)
+    y3x = np.delete(y3x, ind)
+    y3y = np.delete(y3y, ind)
+    np.savetxt('y1x.txt', y1x)
+    np.savetxt('y1y.txt', y1y)
+    np.savetxt('y3x.txt', y3x)
+    np.savetxt('y3y.txt', y3y)
+    print(str(len(y1x))+' frames are remaining.')
+    return
 # TODO: Implement van der waals potential to wall depletion.
 ###############################################
 if __name__ == "__main__":
-    print(1)
+    path = '/media/zezhou/Seagate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/datafterlinearshift/' \
+           'trash/1/'
+    remover(path, rframes=[8000, 10000])
