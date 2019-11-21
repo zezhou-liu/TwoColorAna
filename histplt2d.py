@@ -7,6 +7,8 @@ from matplotlib.colors import Normalize
 import json
 import os
 import matplotlib.colors as mcolors
+from matplotlib.transforms import Affine2D
+import matplotlib.patches as patches
 
 main_path = "/media/zezhou/Seagate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/datafterlinearshift/tplasmid"
 cleanmode = 1 # 1-cleaned data. The roi.json and tot_file_clean.json files have been saved in ./data folder.
@@ -46,7 +48,7 @@ def ecc0_tp():
     y = np.array([])
     x = np.append(x, handle1.tot_file_shift['ecc0_1_y1x'])
     y = np.append(y, handle1.tot_file_shift['ecc0_1_y1y'])
-    x = x - np.mean(x)
+    # x = x - np.mean(x)
     print('tot_pos_overlay_shift ecc0:' + str(np.mean(x)))
     return x, y
 def ecc06_tp():
@@ -67,7 +69,7 @@ def ecc06_tp():
     y = np.append(y, handle1.tot_file_shift['ecc06_6_y1y'])
     x = np.append(x, handle1.tot_file_shift['ecc06_7_y1x'])
     y = np.append(y, handle1.tot_file_shift['ecc06_7_y1y'])
-    x = x - np.mean(x)
+    # x = x - np.mean(x)
     print('tot_pos_overlay_shift ecc06:' + str(np.mean(x)))
     return x, y
 def ecc08_tp():
@@ -89,7 +91,7 @@ def ecc08_tp():
     y = np.append(y, handle1.tot_file_shift['ecc08_7_y1y'])
     x = np.append(x, handle1.tot_file_shift['ecc08_8_y1x'])
     y = np.append(y, handle1.tot_file_shift['ecc08_8_y1y'])
-    x = x - np.mean(x)
+    # x = x - np.mean(x)
     print('tot_pos_overlay_shift ecc08:' + str(np.mean(x)))
     return x, y
 def ecc09_tp():
@@ -171,7 +173,7 @@ def ecc098_tp():
     y1 = np.append(y1, handle1.tot_file_shift['ecc098_8_y1y'])
     x1 = np.append(x1, handle1.tot_file_shift['ecc098_9_y1x'])
     y1 = np.append(y1, handle1.tot_file_shift['ecc098_9_y1y'])
-    x1 = x1 - np.mean(x1)
+    # x1 = x1 - np.mean(x1)
     print('tot_pos_overlay_shift ecc098:'+str(np.mean(x1)))
     return x1, y1
 def ecc0995_tp():
@@ -211,6 +213,8 @@ def ecc0995_tp():
     x1 = np.append(x1, handle1.tot_file_shift['ecc0995_16_y1x'])
     y1 = np.append(y1, handle1.tot_file_shift['ecc0995_16_y1y'])
     return x1, y1
+
+##
 def ecc0995_lp():
 # ecc0995(lambda-plasmid)
     x = np.array([])
@@ -234,7 +238,7 @@ def cav_ecc06():
     y = b * np.sin(t)
     return x, y
 
-###Data setup####
+###Data setup##########
 x0, y0 = ecc0_tp()
 x1, y1 = ecc06_tp()
 x2, y2 = ecc08_tp()
@@ -242,7 +246,7 @@ x3, y3 = ecc09_tp()
 x4, y4 = ecc095_tp()
 x5, y5 = ecc098_tp()
 x6, y6 = ecc0995_tp()
-X = [x0, x1, x2, x3, x4, x5, x6]
+X = [x0, x1, x2, x3, x4, x5, x6] # Input data array
 Y = [y0, y1, y2, y3, y4, y5, y6]
 # savename = 'Ecc0995_p.eps'
 savename_tot = ['Ecc0_p.png', 'Ecc06_p.png', 'Ecc08_p.png', 'Ecc09_p.png',
@@ -255,14 +259,43 @@ figtitle_tot = ['Plasmid position distribution Ecc=0', 'Plasmid position distrib
 savepath = '/media/zezhou/Se' \
            'agate Expansion Drive/McGillResearch/2019Manuscript_Analysis/Analysis/Plots/tplasmid/hist/'
 xlim_tot = [10, 10, 10, 12, 12, 16, 16]
+scalebar_tot = np.array(xlim_tot)/10*6.25 # Keep length of the scale bar the same
 
+# Annotation text
+marker_tot = ['Eccentricity=0', 'Eccentricity=0.6', 'Eccentricity=0.8',
+              'Eccentricity=0.9', 'Eccentricity=0.95', 'Eccentricity=0.98', 'Eccentricity=0.995']
+scalelabel_tot = ['1um', '1um', '1um', '1.2um', '1.2um', '1.6um', '1.6um']
+
+###
 bins = 80
 cmap = 'YlOrRd'
 fontsize = 20
 labelsize = 15
-cb_fontsize = 12
+cb_fontsize = 15
 ###############
-fig2 = plt.figure(figsize=[25.6, 18.2]) # figs8ize=[6.4, 4.8]
+a = 12
+fig2 = plt.figure(figsize=[a, a/1.3333]) # figs8ize=[6.4, 4.8]
+
+#### Do NOT change here. This section changes color ONLY ####
+vmax = 0
+vmin = 1000
+############################
+for i in range(7):
+    x = X[i]
+    y = Y[i]
+    xlim = xlim_tot[i]
+
+    # Rescaling
+    h = np.histogram2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], density=True)
+    ## scale the color
+    sh = h[0][int(bins/2-10):int(bins/2+10), int(bins/2-4):int(bins/2+4)]
+    mi = np.min(sh) # smallest probability of the center square
+    ma = np.max(h[0]) #largest
+    ####################
+    if vmin>mi:
+        vmin = mi
+    if vmax<ma:
+        vmax = ma
 for i in range(7):
     x = X[i]
     y = Y[i]
@@ -271,21 +304,19 @@ for i in range(7):
     savename = savename_tot[i]
     # scale = 6.4/4.8
     ax2 = fig2.add_subplot(3,3,i+1) # Axes location. Right now it's an easy going version.
-
-    # Rescaling
-    h = np.histogram2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], density=True)
-    ## scale the color
-    sh = h[0][int(bins/2-10):int(bins/2+10), int(bins/2-10):int(bins/2+10)]
-    ####################
-
     # 2d hist
-    h, xedges, yedges, img = ax2.hist2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], cmap=cmap, vmin=np.min(sh),
-                                        vmax=np.max(h[0]), density=True, norm=mcolors.PowerNorm(0.7))
-    
-    norm = colors.Normalize(vmin = np.min(h), vmax = np.max(h))
-    # colorbar
-    cb = fig2.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), ax = ax2)
-    cb.set_label('Probability', fontsize = fontsize, rotation = -90, horizontalalignment = 'center', verticalalignment = 'bottom')
+
+    # individual plot: uncomment this section for individual colorbar plot
+    # h, xedges, yedges, img = ax2.hist2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], cmap=cmap, vmin=np.min(sh),
+    #                                     vmax=np.max(h[0]), density=True, norm=mcolors.PowerNorm(0.7))
+
+    # Universal plot:
+    h, xedges, yedges, img = ax2.hist2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], cmap=cmap,
+                                        vmin=vmin, vmax=vmax, density=True, norm=mcolors.PowerNorm(0.7))
+    # colorbar: uncomment this section for individual colorbar
+    # norm = colors.Normalize(vmin=np.min(h), vmax=np.max(h))
+    # cb = fig2.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), ax = ax2)
+    # cb.set_label('Probability', fontsize = fontsize, rotation = -90, horizontalalignment = 'center', verticalalignment = 'bottom')
 
     # axes label
     ax2.set_xlabel(r'Position($\mu$m)', fontsize = fontsize)
@@ -307,6 +338,8 @@ for i in range(7):
     ax2.set_xticklabels(xticklabel, fontsize = labelsize)
     ax2.set_yticklabels(xticklabel, fontsize = labelsize)
 
+    # Axis switch
+    ax2.axis('off')
     # Grid
     # ax2.grid(b=True, ls = '--', dash_capstyle='round')
 
@@ -317,7 +350,26 @@ for i in range(7):
 
     # Title
     # ax2.set_title(figtitle, fontsize = fontsize)
-fig2.suptitle('Plasmid distribution in different cavities')
+
+    # text comment
+    mark = marker_tot[i]
+    ax2.text(x = -xlim*0.9, y=xlim*0.8, s=mark, fontsize = labelsize)
+
+    # scale bar location
+    sc = scalebar_tot[i]
+    rect = patches.Rectangle((xlim*0.3, -xlim*0.75), width = sc, height=sc/8, fill=True, color = 'black')
+    ax2.add_patch(rect)
+    # scale bar label
+    scalelabel = scalelabel_tot[i]
+    ax2.text(x=xlim * 0.5, y=-xlim * 0.95, s=scalelabel, fontsize=labelsize)
+fig2.suptitle('Plasmid distribution in different cavities', fontsize=20)
+
+# Universal colorbar
+cax = fig2.add_axes([0.4, 0.2, 0.5, 0.05])
+norm = colors.Normalize(vmin=vmin, vmax=vmax)
+cb = fig2.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax = cax, orientation = 'horizontal')
+cb.set_label('Probability', fontsize = cb_fontsize , horizontalalignment = 'center')
+
 os.chdir(savepath)
-plt.savefig('histall.eps')
+# plt.savefig('histall_uni.png')
 plt.show()
