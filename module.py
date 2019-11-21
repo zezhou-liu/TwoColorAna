@@ -338,6 +338,49 @@ def bashshift(handle, n_init = 5, max_iter = 100, tol=0.001):
         tot_file_shift[filename] = np.array(tot_file_shift[filename])
     handle.tot_file_shift = tot_file_shift
     return handle, tot_file_shift
+
+def allshift(handle):
+    # use y1,y3 center together to shift all data
+    tot_file_clean = handle.tot_file_clean
+    temp = ''
+    tot_file_shift = {}
+    for i in tot_file_clean:
+        # if i.split('_')[0] + '_' + i.split('_')[1] != 'ecc09_2': # Comment here to run through all dataset. Right now it's set
+        #     continue                   # to ecc09 set for debugging.
+        if (temp != (i.split('_')[0] + '_' + i.split('_')[1])) and (i[-5:] != 'clean'):
+            temp = i.split('_')[0] + '_' + i.split('_')[1]
+            y1x_centered = np.zeros(len(handle.tot_file_clean[temp + '_y1x']))  # centered data container.
+            y1y_centered = np.zeros(len(handle.tot_file_clean[temp + '_y1y']))
+            y3x_centered = np.zeros(len(handle.tot_file_clean[temp + '_y3x']))
+            y3y_centered = np.zeros(len(handle.tot_file_clean[temp + '_y3y']))
+
+            y1x = handle.tot_file_clean[temp + '_y1x']  # raw data
+            y1y = handle.tot_file_clean[temp + '_y1y']
+            y3x = handle.tot_file_clean[temp + '_y3x']
+            y3y = handle.tot_file_clean[temp + '_y3y']
+            x_center = (np.mean(y1x)+np.mean(y3x))*0.5
+            y_center = (np.mean(y1y) + np.mean(y3y)) * 0.5
+
+            y1x_centered = y1x - x_center  # Centered data. All shifted to zero
+            y1y_centered = y1y - y_center
+            y3x_centered = y3x - x_center
+            y3y_centered = y3y - y_center
+
+            tot_file_shift[temp + '_y1x'] = list(y1x_centered)
+            tot_file_shift[temp + '_y1y'] = list(y1y_centered)
+            tot_file_shift[temp + '_y3x'] = list(y3x_centered)
+            tot_file_shift[temp + '_y3y'] = list(y3y_centered)
+    os.chdir(handle.main_path + '/data')
+    import json
+    json = json.dumps(tot_file_shift)
+    f = open('tot_file_clean.json', 'w')
+    f.write(json)
+    f.close()
+    for filename in tot_file_shift:
+        tot_file_shift[filename] = np.array(tot_file_shift[filename])
+    handle.tot_file_shift = tot_file_shift
+    return handle, tot_file_shift
+
 def bashroi(handle):
     ## Manual clean all the data outside the ROI. This will pop up a window and let usr select the ROI.
     ## Data outside ROI will be deleted.
@@ -443,7 +486,7 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
     # area: ellipse area(um^2). It shows the generic size of ellipse
     # No ellipse fitting in the end. Hard to justify if there is any mismatch.
     # Output: handle
-    x0 = [15, 15]
+    # x0 = [15, 15]
     if debug == False:
         if dataset == 'position':
             data = handle.tot_pos_overlay_shift
@@ -594,49 +637,119 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
         dely = y
         x = np.power(delx, 2)
         y = np.power(dely, 2)
-        a = (area ** 2 / (4 * (1 - ecc ** 2))) ** (0.25)  # rough half-long axis
-        b = area / 2 / a  # rough half-short axis
+        a = np.sqrt(np.sqrt(area**2/(np.pi**2*(1-ecc**2))))  # rough half-long axis
+        b = area / np.pi / a  # rough half-short axis
         r = x / (a ** 2) + y / (b ** 2)
         mask = r < 1
         # TODO: Vector cut. Strength of the filter is set by the variable "fils" above. Theoretically it should be 6.25**2.
-        # Microscope pixel size calibration is needed.
+        # Microscope pixel size calibration is needed. Done
         r_edge = np.linspace(0, 1, bins)
         d_edge = np.linspace(-np.pi, np.pi, bins)
         x = delx[mask]  # Actual data
         y = dely[mask]
         deg = np.arctan2(y, x)
+        n = len(x) # Here change the number of points
+
         r = x ** 2 / (a ** 2) + y ** 2 / (b ** 2)
         area_e = np.zeros(len(r_edge))  # elliptical ring area
         area_r = np.zeros(len(d_edge))  # elliptical pizza area
-        for i in range(len(r_edge)):
-            if i == 0:
-                area_e[i] = 2 * a * b * r_edge[0]
-            else:
-                area_e[i] = 2 * a * b * (r_edge[i] - r_edge[i - 1])
+        for i in range(len(r_edge)-1):
+            area_e[i] = np.pi * a * b * (r_edge[i+1] - r_edge[i])
         density = np.zeros(len(area_e))
-        for i in range(len(r_edge)):
-            if i == 0:
-                r0 = 0
-            else:
-                r0 = r_edge[i - 1]
-            r1 = r_edge[i]
-            density[i] = (np.sum((r < r1) * (r > r0))) / area_e[i]
+        for i in range(len(r_edge)-1):
+            r0 = r_edge[i]
+            r1 = r_edge[i+1]
+            density[i] = (np.sum((r < r1) * (r > r0))) / n / area_e[i]
         rfunc = lambda theta: np.sqrt(1 / (np.cos(theta) ** 2 / a ** 2 + np.sin(theta) ** 2 / b ** 2))
         deg_density = np.zeros(len(d_edge))
-        for j in range(len(d_edge)):
-            if j == 0:
-                continue
-            else:
-                d0 = d_edge[j - 1]
-            d1 = d_edge[j]
+        for j in range(len(d_edge)-1):
+            d0 = d_edge[j]
+            d1 = d_edge[j+1]
             area_r[j] = quad(rfunc, a=d0, b=d1)[0]
-            deg_density[j] = np.sum((deg > d0) * (deg < d1)) / area_r[j]
+            deg_density[j] = np.sum((deg > d0) * (deg < d1))/n
+
+        density[0] = 0
         density_hist['test_density'] = density
         density_hist['test_edge'] = r_edge
         density_hist['test_degedge'] = d_edge
         density_hist['test_degdensity'] = deg_density
-        return density_hist
+        handle.tot_density_hist = density_hist
+        return handle
+def swapcounter(data, threshhold=0.8,bins=15):
+    # tot_vector = handle.tot_vector_clean
+    # prefix = ''
+    # # threshhold = [] #ecc0,0.3,0.6,0.9
+    # # threshlength = []
+    # # threshangle = []
+    # for item in tot_vector:
+    #     prefix_n = item.split('_')[0]+'_'+item.split('_')[1]
+    #     if prefix_n == prefix:
+    #         continue
+    #     tmp = item.split('_')
+    #     delx = tot_vector[tmp[0]+'_'+tmp[1]+'_delx']
+    #     state = np.zeros_like(delx)
+    #     # if state[0] != 0:
+    #     #     preval = state[0]
+    #     # else:
+    #     #     for i in state:
+    #     #         if i!=0:
+    #     #             preval=i
+    #     #             break
+    #     # for i in range(len(state)):                         # Some data has fragmentation defect. Shouldn't be included(ecc09-8,9). Thus delete
+    #     #     if state[i] == 0:
+    #     #         state[i] = preval
+    #     #     else:
+    #     #         preval = state[i]
+    #
+    #     fig, ax = plt.subplots(nrows=1, ncols = 2)
+    #     plt.suptitle(tmp[0]+'_'+tmp[1])
+    #     ax[0].plot(delx)
+    #     # ax[1].plot(state)
+    #     plt.show()
+    #     prefix = prefix_n
+    # return
 
+    # Input: data, reaction co-ordinate. delx in this case.
+    # Ouput: state, justified
+
+    upbound = np.max(np.abs(data))
+    thup = threshhold*upbound
+    thdn = (1-threshhold)*upbound
+
+    state = np.zeros_like(data)
+    maskup = data>=thup
+    state[maskup] = 1
+    maskdn = data<thdn
+    state[maskdn] = -1
+    if state[0] != 0:
+            preval = state[0]
+    else:
+        for i in state:
+            if i != 0:
+                preval = i
+                break
+    for i in range(len(state)):                         # Some data has fragmentation defect. Shouldn't be included(ecc09-8,9). Thus delete
+        if state[i] == 0:
+            state[i] = preval
+        else:
+            preval = state[i]
+
+    import itertools
+    def counts(sig):
+        sig = list(sig)
+        l = [(k, len(list(g))) for k, g in itertools.groupby(sig)]
+        ton = []
+        toff = []
+        for x in l:
+            if x[0] == 1:
+                ton.append(x[1])
+            else:
+                toff.append(x[1])
+        return ton, toff
+
+    ton, toff = counts(state)
+    tot_t = ton+toff
+    return state, tot_t
 ####################### Toolkits ###################################
 # The functions listed here are to test different theoretical models and will be modified later.
 # Some simplt toolkits are provided to pre-process the data.
@@ -694,8 +807,8 @@ def blobsize():
     return
 def ellipse_para(ecc=0):
     # output: width in um
-    area = 3.14
-    a = np.sqrt(area**2/(np.pi**2*(1-ecc**2)))
+    area = np.pi
+    a = np.sqrt(np.sqrt(area**2/(np.pi**2*(1-ecc**2))))
     b = area/np.pi/a
     return [a, b]
 def ellipse_width(ecc=0):

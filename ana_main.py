@@ -215,7 +215,7 @@ def oldvisul():
     # ax.plot(handle1.tot_density_hist['ecc09_edge'], handle1.tot_density_hist['ecc09_density_y1']/len(handle1.tot_pos_overlay_shift['ecc09_y1x']))
     # ax.plot(density_test['test_edge'], density_test['test_density']/np.sum(density_test['test_density'][1:]))
     # ax.legend(['ecc0', 'ecc0.6', 'ecc0.8', 'ecc0.9', 'ecc0.995'])
-    # ax.set_xlabel('Normalized radius', fontsize=15)
+    # ax.set_xlabel('Normfalized radius', fontsize=15)
     # ax.set_ylabel('Probability', fontsize=15)
     # ax2 = fig.add_subplot(1,2,2)
     # ax2.plot(handle1.tot_density_hist['ecc0_degedge'], handle1.tot_density_hist['ecc0_degdensity_y1'])
