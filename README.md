@@ -80,20 +80,20 @@ TODO: Implement linear shifting mode.
 
 **Output**: Data handle, tot_file_shift. The shift file is attached to handle as *handle.tot_file_shift*. Item naming format is *'ecc03_1_y1x'*.
 
-### densitycal(handle, dataset='position', bins=10, area=3.14, x=[], y=[], debug='False')
+### densitycal(handle, dataset='position', bins=10, area=3.14, x=[], y=[], debug=False)
 Density distribution calculation using normalize radius. The radius density is calculated by constructing "concentric" ellipse. In specific, the RHS of ellipse equation will range from (0,1] and the density is calculated by dividing the number of pts within an elliptical ring by the area of the ring. Degree density calculation divides the number of pts within an elliptical "pizza" corner with the size of "pizza corner". This function has two dataset modes. In 'position' mode, there has be to shifted position data saved in handle(Please check *bashshift* function for help).  In 'vector' mode, there has to be cleaned overlay vectors in handle(Please refer *bashvector* for help).
 
 **Input**: Data handle
 
 **Parameters**: dataset, data mode you want to process; bins: density calculation bins; area: the formal area of the ellipse in um^2. Default is 3.14; debug: default "False". This will allow function accept the coordinates of pts(x and y;dtype=np.array) and calculate the radius/radians distribution. For datachecking purpose only.
 
-**Output**: Data handle. *tot_density_hist* dictionary will be attached to the data handle. The keys for the dictionary are shown:
+**Output**: Data handle. A *tot_density_hist* dictionary will be attached to the data handle. The keys for the dictionary are shown:
 
 | Mode         | Radius edge | Radius density    | Degree edge    | Degree density       |
 |--------------|-------------|-------------------|----------------|----------------------|
 | 'position'   | 'ecc0_edge' | 'ecc0_density_y1' | 'ecc0_degedge' | 'ecc0_degdensity_y1' |
 | 'vector'     | 'ecc0_edge' | 'ecc0_density'    | 'ecc0_degedge' | 'ecc0_degdensity'    |
-| debug='True' | 'test_edge' | 'test_density'    | 'test_degedge' | 'test_degdensity'    |
+| debug=True | 'test_edge' | 'test_density'    | 'test_degedge' | 'test_degdensity'    |
 
 
 Example of use:
