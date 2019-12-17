@@ -267,13 +267,13 @@ marker_tot = ['Eccentricity=0', 'Eccentricity=0.6', 'Eccentricity=0.8',
 scalelabel_tot = ['1um', '1um', '1um', '1.2um', '1.2um', '1.6um', '1.6um']
 
 ###
-bins = 80
-cmap = 'YlOrRd'
-fontsize = 20
-labelsize = 15
-cb_fontsize = 15
+bins = 70
+cmap = 'inferno'
+fontsize = 25
+labelsize = 20
+cb_fontsize = 20
 ###############
-a = 12
+a = 10
 fig2 = plt.figure(figsize=[a, a/1.3333]) # figs8ize=[6.4, 4.8]
 
 #### Do NOT change here. This section changes color ONLY ####
@@ -296,6 +296,10 @@ for i in range(7):
         vmin = mi
     if vmax<ma:
         vmax = ma
+width = 0.27
+os.chdir("/home/zezhou/McGillResearch/2019Manuscript_Analysis/femsimulation/t4concentration/data/")
+sfname = ['Ecc0', 'Ecc06', 'Ecc08',
+              'Ecc09', 'Ecc095', 'Ecc098', 'Ecc0995']
 for i in range(7):
     x = X[i]
     y = Y[i]
@@ -303,7 +307,9 @@ for i in range(7):
     figtitle = figtitle_tot[i]
     savename = savename_tot[i]
     # scale = 6.4/4.8
-    ax2 = fig2.add_subplot(3,3,i+1) # Axes location. Right now it's an easy going version.
+    r = i//3
+    c = i%3
+    ax2 = fig2.add_axes([0+c*width,0.6-r*width,width,width]) # Axes location. Right now it's an easy going version.
     # 2d hist
 
     # individual plot: uncomment this section for individual colorbar plot
@@ -311,13 +317,20 @@ for i in range(7):
     #                                     vmax=np.max(h[0]), density=True, norm=mcolors.PowerNorm(0.7))
 
     # Universal plot:
-    h, xedges, yedges, img = ax2.hist2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], cmap=cmap,
-                                        vmin=vmin, vmax=vmax, density=True, norm=mcolors.PowerNorm(0.7))
+    if i !=0:
+        h, xedges, yedges, img = ax2.hist2d(x, y, bins=[bins, bins], range=[[-xlim, xlim], [-xlim, xlim]], cmap=cmap,
+                                            density=True)
+    else:
+        h, xedges, yedges, img = ax2.hist2d(x, y, bins=[bins-15, bins-15], range=[[-xlim, xlim], [-xlim, xlim]], cmap=cmap,
+                                            norm = mcolors.PowerNorm(0.6) ,density=True)
     # colorbar: uncomment this section for individual colorbar
     # norm = colors.Normalize(vmin=np.min(h), vmax=np.max(h))
     # cb = fig2.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), ax = ax2)
     # cb.set_label('Probability', fontsize = fontsize, rotation = -90, horizontalalignment = 'center', verticalalignment = 'bottom')
-
+    sfntmp = sfname[i]
+    np.savetxt(sfntmp+"x.txt", xedges)
+    np.savetxt(sfntmp + "y.txt", yedges)
+    np.savetxt(sfntmp + "h.txt", h)
     # axes label
     ax2.set_xlabel(r'Position($\mu$m)', fontsize = fontsize)
     ax2.set_ylabel(r'Position($\mu$m)', fontsize = fontsize)
@@ -353,22 +366,23 @@ for i in range(7):
 
     # text comment
     mark = marker_tot[i]
-    ax2.text(x = -xlim*0.9, y=xlim*0.8, s=mark, fontsize = labelsize)
+    ax2.text(x = -xlim*0.9, y=xlim*0.8, s=mark, fontsize = labelsize, color='w')
 
     # scale bar location
     sc = scalebar_tot[i]
-    rect = patches.Rectangle((xlim*0.3, -xlim*0.75), width = sc, height=sc/8, fill=True, color = 'black')
+    rect = patches.Rectangle((xlim*0.3, -xlim*0.65), width = sc, height=sc/8, fill=True, color = 'black')
     ax2.add_patch(rect)
     # scale bar label
     scalelabel = scalelabel_tot[i]
-    ax2.text(x=xlim * 0.5, y=-xlim * 0.95, s=scalelabel, fontsize=labelsize)
+    ax2.text(x=xlim * 0.3, y=-xlim * 0.95, s=scalelabel, fontsize=labelsize)
 fig2.suptitle('Plasmid distribution in different cavities', fontsize=20)
 
 # Universal colorbar
-cax = fig2.add_axes([0.4, 0.2, 0.5, 0.05])
+cax = fig2.add_axes([0.81, 0.33, 0.025, 0.54])
 norm = colors.Normalize(vmin=vmin, vmax=vmax)
-cb = fig2.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax = cax, orientation = 'horizontal')
-cb.set_label('Probability', fontsize = cb_fontsize , horizontalalignment = 'center')
+cb = fig2.colorbar(cm.ScalarMappable(norm=norm, cmap=cmap), cax = cax, orientation = 'vertical')
+cb.ax.tick_params(labelsize=15)
+cb.set_label('Probability', fontsize = cb_fontsize+5 , horizontalalignment = 'center', rotation=-90, labelpad=20)
 
 os.chdir(savepath)
 # plt.savefig('histall_uni.png')
