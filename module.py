@@ -421,7 +421,7 @@ def bashroi(handle):
             temp = i.split('_')[0] + '_' + i.split('_')[1]
             ax.plot(tot_vector[temp + '_delx'], tot_vector[temp + '_dely'], '+')
             ax.set_xlim([-25, 25])
-            ax.set_ylim([-12, 12])
+            ax.set_ylim([-20, 20])
             ax.set_title(temp+'_ROI selection')
             ax.grid(b=True, which='both', axis='both')
             plt.show()
@@ -675,7 +675,7 @@ def densitycal(handle, dataset = 'position', bins = 10, area = 3.14, x=[], y=[],
         density_hist['test_degdensity'] = deg_density
         handle.tot_density_hist = density_hist
         return handle
-def swapcounter(data, threshhold=0.8,bins=15):
+def swapcounter(data, threshhold=0.8):
     # tot_vector = handle.tot_vector_clean
     # prefix = ''
     # # threshhold = [] #ecc0,0.3,0.6,0.9
@@ -714,20 +714,20 @@ def swapcounter(data, threshhold=0.8,bins=15):
 
     upbound = np.max(np.abs(data))
     thup = threshhold*upbound
-    thdn = (1-threshhold)*upbound
+    thdn = -threshhold*upbound
 
     state = np.zeros_like(data)
     maskup = data>=thup
     state[maskup] = 1
     maskdn = data<thdn
     state[maskdn] = -1
-    if state[0] != 0:
-            preval = state[0]
-    else:
-        for i in state:
-            if i != 0:
-                preval = i
-                break
+    # if state[0] != 0:
+    #         preval = state[0]
+    # else:
+    for i in state:
+        if i != 0:
+            preval = i
+            break
     for i in range(len(state)):                         # Some data has fragmentation defect. Shouldn't be included(ecc09-8,9). Thus delete
         if state[i] == 0:
             state[i] = preval
@@ -749,7 +749,7 @@ def swapcounter(data, threshhold=0.8,bins=15):
 
     ton, toff = counts(state)
     tot_t = ton+toff
-    return state, tot_t
+    return state, tot_t, thup
 ####################### Toolkits ###################################
 # The functions listed here are to test different theoretical models and will be modified later.
 # Some simplt toolkits are provided to pre-process the data.
